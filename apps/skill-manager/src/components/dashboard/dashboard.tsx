@@ -1,14 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Server, Wrench, BookOpen, Activity } from "lucide-react";
-import { useGatewayStatus } from "@/hooks/use-gateway-status";
-import { useConfig } from "@/hooks/use-config";
-import { useSkills } from "@/hooks/use-skills";
+import { useAppGatewayStatus, useAppConfig, useAppSkills } from "@/contexts/app-context";
 
 export function Dashboard() {
-  const { status } = useGatewayStatus();
-  const { config } = useConfig();
-  const { skills } = useSkills();
+  const { status } = useAppGatewayStatus();
+  const { config } = useAppConfig();
+  const { skills } = useAppSkills();
 
   const serverCount = config ? Object.keys(config.servers).length : 0;
   const connectedServers = status
@@ -111,7 +109,7 @@ export function Dashboard() {
       </div>
 
       {/* Server Status Details */}
-      {status?.running && Object.keys(status.servers).length > 0 && (
+      {status?.running && serverCount > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">
@@ -120,31 +118,49 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {Object.entries(status.servers).map(([key, serverStatus]) => (
-                <div
-                  key={key}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <div className="flex items-center gap-3">
+              {Object.entries(config!.servers)
+                .filter(([, s]) => s.enabled)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([key, serverConfig]) => {
+                  const serverStatus = status.servers[key];
+                  const isConnected = serverStatus?.connected ?? false;
+
+                  return (
                     <div
-                      className={`size-2 rounded-full ${
-                        serverStatus.connected
-                          ? "bg-green-500"
-                          : "bg-red-500"
-                      }`}
-                    />
-                    <span className="font-medium">{key}</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>{serverStatus.toolCount} Tools</span>
-                    <span>{serverStatus.resourceCount} Resources</span>
-                    <span>{serverStatus.promptCount} Prompts</span>
-                    {serverStatus.error && (
-                      <Badge variant="destructive">{serverStatus.error}</Badge>
-                    )}
-                  </div>
-                </div>
-              ))}
+                      key={key}
+                      className="flex items-center justify-between rounded-lg border p-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`size-2 rounded-full ${
+                            isConnected
+                              ? "bg-green-500"
+                              : serverStatus?.error
+                                ? "bg-red-500"
+                                : "bg-yellow-500"
+                          }`}
+                        />
+                        <div>
+                          <span className="font-medium">{serverConfig.name}</span>
+                          <span className="ml-2 text-xs text-muted-foreground">{key}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        {isConnected ? (
+                          <>
+                            <span>{serverStatus!.toolCount} Tools</span>
+                            <span>{serverStatus!.resourceCount} Resources</span>
+                            <span>{serverStatus!.promptCount} Prompts</span>
+                          </>
+                        ) : serverStatus?.error ? (
+                          <Badge variant="destructive">{serverStatus.error}</Badge>
+                        ) : (
+                          <span className="text-yellow-600">Verbinden...</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </CardContent>
         </Card>

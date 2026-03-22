@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -23,7 +23,7 @@ fn skills_dir() -> PathBuf {
 pub struct SkillManagementConfig {
     pub version: String,
     pub gateway: GatewayConfig,
-    pub servers: HashMap<String, DownstreamServerConfig>,
+    pub servers: BTreeMap<String, DownstreamServerConfig>,
     pub skills: SkillsConfig,
 }
 
@@ -48,19 +48,19 @@ pub enum TransportConfig {
         #[serde(skip_serializing_if = "Option::is_none")]
         args: Option<Vec<String>>,
         #[serde(skip_serializing_if = "Option::is_none")]
-        env: Option<HashMap<String, String>>,
+        env: Option<BTreeMap<String, String>>,
         #[serde(skip_serializing_if = "Option::is_none")]
         cwd: Option<String>,
     },
     Sse {
         url: String,
         #[serde(skip_serializing_if = "Option::is_none")]
-        headers: Option<HashMap<String, String>>,
+        headers: Option<BTreeMap<String, String>>,
     },
     StreamableHttp {
         url: String,
         #[serde(skip_serializing_if = "Option::is_none")]
-        headers: Option<HashMap<String, String>>,
+        headers: Option<BTreeMap<String, String>>,
     },
 }
 
@@ -69,7 +69,7 @@ impl Default for SkillManagementConfig {
         Self {
             version: "1.0".to_string(),
             gateway: GatewayConfig { auto_start: false },
-            servers: HashMap::new(),
+            servers: BTreeMap::new(),
             skills: SkillsConfig {
                 directory: skills_dir().to_string_lossy().to_string(),
             },

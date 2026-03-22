@@ -10,22 +10,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { useConfig } from "@/hooks/use-config";
-import { useGatewayStatus } from "@/hooks/use-gateway-status";
+import { useAppConfig, useAppGatewayStatus } from "@/contexts/app-context";
 import { ServerForm } from "./server-form";
 import type { DownstreamServerConfig } from "@/lib/tauri-commands";
 
 export function ServerList() {
   const { config, addServer, updateServer, removeServer, toggleServer } =
-    useConfig();
-  const { status } = useGatewayStatus();
+    useAppConfig();
+  const { status } = useAppGatewayStatus();
   const [formOpen, setFormOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
 
   if (!config) return null;
 
-  const servers = Object.entries(config.servers);
+  const servers = Object.entries(config.servers).sort(([a], [b]) => a.localeCompare(b));
 
   const handleEdit = (key: string) => {
     setEditingKey(key);
@@ -104,20 +103,18 @@ export function ServerList() {
                       {serverConfig.transport.type}
                     </Badge>
 
-                    {serverConfig.enabled && serverStatus && (
-                      <Badge
-                        variant={
-                          serverStatus.connected ? "default" : "secondary"
-                        }
-                      >
-                        {serverStatus.connected
-                          ? `${serverStatus.toolCount}T / ${serverStatus.resourceCount}R / ${serverStatus.promptCount}P`
-                          : "Getrennt"}
-                      </Badge>
-                    )}
-
-                    {!serverConfig.enabled && (
+                    {!serverConfig.enabled ? (
                       <Badge variant="secondary">Deaktiviert</Badge>
+                    ) : !status?.running ? (
+                      <Badge variant="secondary">Gateway offline</Badge>
+                    ) : serverStatus?.connected ? (
+                      <Badge variant="default">
+                        {serverStatus.toolCount}T / {serverStatus.resourceCount}R / {serverStatus.promptCount}P
+                      </Badge>
+                    ) : serverStatus && serverStatus.error ? (
+                      <Badge variant="destructive">Fehler</Badge>
+                    ) : (
+                      <Badge variant="secondary">Verbinden...</Badge>
                     )}
 
                     <DropdownMenu>

@@ -10,12 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
-import { useSkills } from "@/hooks/use-skills";
+import { useAppSkills } from "@/contexts/app-context";
 import { SkillForm } from "./skill-form";
 import type { SkillContent } from "@/lib/tauri-commands";
 
 export function SkillList() {
-  const { skills, loadSkill, createSkill, updateSkill, removeSkill } = useSkills();
+  const { skills, loadSkill, createSkill, updateSkill, removeSkill } = useAppSkills();
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);

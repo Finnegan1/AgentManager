@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -26,7 +26,7 @@ pub struct GatewayStatus {
     pub running: bool,
     pub pid: Option<u32>,
     pub started_at: Option<String>,
-    pub servers: HashMap<String, ServerConnectionStatus>,
+    pub servers: BTreeMap<String, ServerConnectionStatus>,
 }
 
 #[tauri::command]
@@ -38,7 +38,7 @@ pub fn get_gateway_status() -> Result<GatewayStatus, String> {
             running: false,
             pid: None,
             started_at: None,
-            servers: HashMap::new(),
+            servers: BTreeMap::new(),
         });
     }
 
@@ -50,7 +50,7 @@ pub fn get_gateway_status() -> Result<GatewayStatus, String> {
     struct RawStatus {
         pid: u32,
         started_at: String,
-        servers: HashMap<String, ServerConnectionStatus>,
+        servers: BTreeMap<String, ServerConnectionStatus>,
     }
 
     let raw: RawStatus = serde_json::from_str(&content)
@@ -68,7 +68,7 @@ pub fn get_gateway_status() -> Result<GatewayStatus, String> {
         running,
         pid: if running { Some(raw.pid) } else { None },
         started_at: if running { Some(raw.started_at) } else { None },
-        servers: if running { raw.servers } else { HashMap::new() },
+        servers: if running { raw.servers } else { BTreeMap::new() },
     })
 }
 
