@@ -1,0 +1,78 @@
+---
+title: Managing Servers
+description: How to add, edit, enable/disable, and remove downstream MCP servers.
+---
+
+The **Server** page lets you configure all your downstream MCP server connections.
+
+## Server List
+
+Each configured server is shown as a card displaying:
+
+- **Server name** and key
+- **Transport type** badge (stdio, SSE, or streamable-http)
+- **Connection status** — Connected, Connecting, Error, Disabled, or Gateway Offline
+- **Capability counts** — Number of tools, resources, and prompts (when connected)
+- **Enable/disable toggle**
+- **Edit and delete actions** (via dropdown menu)
+
+Servers are sorted alphabetically by their key.
+
+## Adding a Server
+
+1. Click the **Server hinzufügen** (Add Server) button
+2. Fill in the form:
+
+| Field | Description |
+|---|---|
+| **Server-Key** | Unique identifier used as the namespace prefix (e.g. `db`, `ai-tools`) |
+| **Name** | Human-readable display name |
+| **Transport-Typ** | Connection method: stdio, SSE, or streamable-http |
+
+3. Fill in the transport-specific fields (see below)
+4. Click **Speichern** (Save)
+
+### stdio Transport Fields
+
+| Field | Description | Example |
+|---|---|---|
+| **Command** | Executable to run | `bun`, `node`, `npx` |
+| **Arguments** | Space-separated command args | `/path/to/server.ts --flag` |
+| **Environment Variables** | One `KEY=VALUE` per line | `API_KEY=sk-123` |
+| **Working Directory** | Process working directory | `/path/to/project` |
+
+### SSE / Streamable HTTP Fields
+
+| Field | Description | Example |
+|---|---|---|
+| **URL** | Server endpoint | `https://example.com/mcp` |
+| **Headers** | One `Key: Value` per line | `Authorization: Bearer token` |
+
+## Editing a Server
+
+Click the dropdown menu (three dots) on a server card and select **Bearbeiten** (Edit). The server key cannot be changed — all other fields are editable.
+
+## Enabling and Disabling
+
+Use the toggle switch on each server card. When disabled:
+- The gateway disconnects from the server
+- Its tools, resources, and prompts are removed from the gateway
+- The configuration is preserved for re-enabling
+
+<Callout>
+  Changes take effect immediately — the gateway watches the config file and picks up changes automatically.
+</Callout>
+
+## Deleting a Server
+
+Click the dropdown menu and select **Löschen** (Delete). This removes the server from the configuration entirely. The action cannot be undone.
+
+## Connection Status
+
+| Status | Meaning |
+|---|---|
+| **Verbunden** (Connected) | Successfully connected and capabilities discovered |
+| **Verbindet...** (Connecting) | Connection attempt in progress |
+| **Fehler** (Error) | Connection failed — hover or check dashboard for the error message |
+| **Deaktiviert** (Disabled) | Server is disabled in configuration |
+| **Gateway offline** | The MCP gateway process is not running |

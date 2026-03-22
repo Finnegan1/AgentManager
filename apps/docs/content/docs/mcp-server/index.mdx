@@ -1,0 +1,71 @@
+---
+title: MCP Server
+description: The MCP gateway server — how it runs, what it exposes, and how it proxies downstream servers.
+---
+
+The **MCP gateway server** is the core runtime component of Skill Gateway. It's a Node.js/Bun process that implements the [Model Context Protocol](https://modelcontextprotocol.io/) and acts as a unified entry point for your AI client.
+
+## Running the Server
+
+The gateway runs as a stdio-based MCP server. Your AI client launches it directly:
+
+```json
+{
+  "mcpServers": {
+    "skill-gateway": {
+      "command": "bun",
+      "args": ["/path/to/skill-management/apps/skill-mcp/src/index.ts"]
+    }
+  }
+}
+```
+
+When started, the gateway:
+
+1. Loads the configuration from `~/.skill-management/config.json`
+2. Starts watching the config file for changes
+3. Connects to all enabled downstream servers
+4. Discovers their capabilities (tools, resources, prompts)
+5. Begins writing status to `~/.skill-management/status.json` every 5 seconds
+6. Starts accepting MCP requests on stdio
+
+## What It Exposes
+
+The gateway exposes a unified set of capabilities to the AI client:
+
+- **Native tools** — Built-in tools for skill management and gateway introspection
+- **Proxied tools** — All tools from connected downstream servers, namespaced with the server key
+- **Proxied resources** — All resources from downstream servers, with namespaced URIs
+- **Proxied prompts** — All prompts from downstream servers, namespaced
+
+<Cards>
+  <Card title="Native Tools" href="/docs/mcp-server/native-tools">
+    The 5 built-in tools for skills and gateway status.
+  </Card>
+  <Card title="Proxying" href="/docs/mcp-server/proxying">
+    How tools, resources, and prompts are namespaced and forwarded.
+  </Card>
+  <Card title="Configuration" href="/docs/mcp-server/configuration">
+    Configuration file format and options.
+  </Card>
+</Cards>
+
+## Key Components
+
+| Component | Responsibility |
+|---|---|
+| **ConfigStore** | Watches and validates `config.json`, emits change events |
+| **SkillManager** | Reads and searches skill files from disk |
+| **ProxyManager** | Orchestrates downstream connections and registries |
+| **DownstreamConnection** | Manages a single downstream MCP server connection |
+| **ToolRegistry** | Aggregates and namespaces tools from all sources |
+| **ResourceRegistry** | Aggregates and namespaces resources |
+| **PromptRegistry** | Aggregates and namespaces prompts |
+
+## Graceful Shutdown
+
+The gateway handles `SIGINT` and `SIGTERM` signals gracefully:
+
+1. All downstream connections are closed
+2. The status file is cleaned up
+3. The process exits cleanly

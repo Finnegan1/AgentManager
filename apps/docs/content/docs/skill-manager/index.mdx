@@ -1,0 +1,48 @@
+---
+title: Desktop App
+description: Overview of the Skill Manager desktop application built with Tauri.
+---
+
+The **Skill Manager** is a native desktop application built with [Tauri 2](https://v2.tauri.app/). It provides a graphical interface for managing your skills and downstream MCP server connections.
+
+## Technology Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 19, TypeScript, Tailwind CSS 4, shadcn/ui |
+| Backend | Rust (Tauri 2.0) |
+| Editor | CodeMirror 6 with Vim keybindings |
+| Icons | Lucide React |
+| Notifications | Sonner (toast notifications) |
+
+## Pages
+
+The app has three main pages, accessible from the sidebar:
+
+<Cards>
+  <Card title="Dashboard" href="/docs/skill-manager/dashboard">
+    System overview with gateway status and metrics.
+  </Card>
+  <Card title="Server Management" href="/docs/skill-manager/managing-servers">
+    Add, edit, enable/disable, and remove downstream MCP servers.
+  </Card>
+  <Card title="Skill Management" href="/docs/skill-manager/managing-skills">
+    Create, edit, search, view, and delete skills.
+  </Card>
+</Cards>
+
+## How It Works
+
+The React frontend communicates with a Rust backend through **Tauri IPC** (inter-process communication). The Rust backend handles all file system operations:
+
+| Command | Purpose |
+|---|---|
+| `get_config` | Read configuration from disk |
+| `save_config` | Write configuration to disk (atomic write) |
+| `list_skills` | List all skill files with parsed metadata |
+| `get_skill` | Read a single skill file |
+| `save_skill` | Write a skill file to disk |
+| `delete_skill` | Remove a skill file |
+| `get_gateway_status` | Read gateway status and verify process is running |
+
+The frontend uses a centralized **AppContext** with three sub-contexts for config, gateway status, and skills — providing reactive state management throughout the app.

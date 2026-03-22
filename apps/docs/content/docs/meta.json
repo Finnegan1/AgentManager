@@ -1,0 +1,17 @@
+{
+  "title": "Docs",
+  "pages": [
+    "index",
+    "---Getting Started---",
+    "getting-started",
+    "---Concepts---",
+    "concepts",
+    "---Architecture---",
+    "architecture",
+    "---Usage---",
+    "skill-manager",
+    "mcp-server",
+    "---Reference---",
+    "reference"
+  ]
+}

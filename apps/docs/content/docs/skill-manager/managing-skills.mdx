@@ -1,0 +1,84 @@
+---
+title: Managing Skills
+description: Creating, editing, searching, and deleting skills in the desktop app.
+---
+
+The **Skills** page lets you manage your skill library — create new skills, edit existing ones, search through them, and delete those you no longer need.
+
+## Skill List
+
+Skills are displayed as cards in a responsive grid layout (1–3 columns depending on screen width). Each card shows:
+
+- **Name** and **description** (clamped to 2 lines)
+- **Tags** as colored badges
+- **Version** and **author** at the bottom
+- **Actions** via dropdown menu: View, Edit, Delete
+
+Use the **search box** at the top to filter skills by name, description, or tags.
+
+## Creating a Skill
+
+1. Click **Skill erstellen** (Create Skill)
+2. A near-full-screen editor dialog opens
+3. Enter the **Skill-ID** — this becomes the filename (e.g. `typescript-best-practices` creates `typescript-best-practices.md`)
+4. Edit the content in the CodeMirror editor. The template includes YAML frontmatter:
+
+```markdown
+---
+name: ""
+tags: []
+description: ""
+version: "1.0"
+author: ""
+created: "2026-03-22"
+updated: "2026-03-22"
+---
+
+# Skill Title
+
+Beschreibe den Skill hier...
+```
+
+5. Click **Speichern** (Save)
+
+The skill is saved to `~/.skill-management/skills/{id}.md` and immediately available through the MCP gateway.
+
+## Editing a Skill
+
+Click the dropdown menu on a skill card and select **Bearbeiten** (Edit). The same editor dialog opens with the skill's current content. The Skill-ID is locked (not editable).
+
+## The Editor
+
+The skill editor uses **CodeMirror 6** with several features:
+
+| Feature | Description |
+|---|---|
+| **Vim keybindings** | Full Vim mode — normal, insert, visual, and command-line modes |
+| **Markdown highlighting** | Syntax highlighting for headings, bold, italic, links, code blocks |
+| **YAML frontmatter** | Highlighted metadata section at the top of each skill |
+| **Line numbers** | Gutter with line numbers and active line highlighting |
+| **Code folding** | Collapse sections with the fold gutter |
+| **Search** | Built-in search and replace (use `:` commands in Vim or Ctrl/Cmd+F) |
+| **Bracket matching** | Auto-matching and auto-closing of brackets |
+| **Line wrapping** | Long lines wrap to fit the editor width |
+
+<Callout>
+  The editor opens in **Vim normal mode** by default. Press `i` to enter insert mode, `Esc` to return to normal mode. Use `:w` to save (via the Save button) or standard Vim motions to navigate.
+</Callout>
+
+## Viewing a Skill
+
+Click the dropdown menu and select **Anzeigen** (View) to see the skill's raw markdown content in a read-only dialog. This is useful for quick reference without entering the editor.
+
+## Deleting a Skill
+
+Click the dropdown menu and select **Löschen** (Delete). The skill file is removed from disk. This action cannot be undone.
+
+## Search
+
+The search box filters skills in real-time. It matches against:
+- Skill **name**
+- Skill **description**
+- Skill **tags**
+
+The search is case-insensitive and updates the displayed cards as you type.

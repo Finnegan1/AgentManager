@@ -1,0 +1,112 @@
+---
+title: File Paths
+description: Where Skill Gateway stores its data, configuration, and status files on disk.
+---
+
+Skill Gateway stores all its data in a single directory on disk. This page documents all file locations.
+
+## Data Directory
+
+All user data lives under:
+
+```
+~/.skill-management/
+```
+
+This directory is created automatically on first launch.
+
+## File Map
+
+```
+~/.skill-management/
+├── config.json          # Main configuration file
+├── status.json          # Gateway runtime status (auto-generated)
+└── skills/              # Skill markdown files
+    ├── skill-one.md
+    ├── skill-two.md
+    └── ...
+```
+
+## File Details
+
+### `config.json`
+
+| Aspect | Detail |
+|---|---|
+| **Created by** | Desktop app (on first launch) |
+| **Written by** | Desktop app (via Tauri IPC) |
+| **Read by** | Gateway (watched with `fs.watch`) |
+| **Format** | JSON |
+| **Write method** | Atomic (write to temp file, then rename) |
+
+Contains all configuration: downstream server definitions, gateway settings, and skills directory path. See the [Config Reference](/docs/reference/config) for the full schema.
+
+### `status.json`
+
+| Aspect | Detail |
+|---|---|
+| **Created by** | Gateway process |
+| **Written by** | Gateway (every 5 seconds) |
+| **Read by** | Desktop app (polled every 5 seconds) |
+| **Format** | JSON |
+| **Cleaned up** | On gateway shutdown, or when desktop app detects stale PID |
+
+Contains the gateway's runtime status:
+
+```json
+{
+  "pid": 12345,
+  "startedAt": "2026-03-22T10:00:00.000Z",
+  "servers": {
+    "db": {
+      "connected": true,
+      "toolCount": 5,
+      "resourceCount": 2,
+      "promptCount": 0
+    },
+    "ai": {
+      "connected": false,
+      "toolCount": 0,
+      "resourceCount": 0,
+      "promptCount": 0,
+      "error": "Connection timeout"
+    }
+  }
+}
+```
+
+<Callout type="warn">
+  This file is transient — it's written by the gateway process and cleaned up on shutdown. If the gateway crashes, the desktop app detects the stale PID and cleans up the file.
+</Callout>
+
+### `skills/*.md`
+
+| Aspect | Detail |
+|---|---|
+| **Created by** | Desktop app or manually |
+| **Written by** | Desktop app (via Tauri IPC) |
+| **Read by** | Gateway (on demand, via MCP tool calls) |
+| **Format** | Markdown with YAML frontmatter |
+
+Each file is an individual skill. The filename (without `.md`) is the skill ID. See the [Skill Format Reference](/docs/reference/skill-format) for the file structure.
+
+## Source Code Locations
+
+For developers working on Skill Gateway itself:
+
+```
+skill-management/
+├── apps/
+│   ├── skill-manager/           # Desktop app
+│   │   ├── src/                 # React frontend
+│   │   └── src-tauri/           # Rust backend
+│   ├── skill-mcp/               # MCP gateway server
+│   │   └── src/                 # TypeScript source
+│   └── docs/                    # This documentation site
+│       └── content/docs/        # MDX content files
+└── packages/
+    ├── shared-types/            # Shared TypeScript types
+    ├── ui/                      # Shared UI components
+    ├── eslint-config/           # ESLint configuration
+    └── typescript-config/       # TypeScript configuration
+```

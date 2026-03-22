@@ -1,0 +1,10 @@
+{
+  "title": "Desktop App",
+  "defaultOpen": false,
+  "pages": [
+    "index",
+    "dashboard",
+    "managing-servers",
+    "managing-skills"
+  ]
+}

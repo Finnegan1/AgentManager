@@ -1,0 +1,116 @@
+---
+title: Native Tools
+description: The 5 built-in MCP tools for skill management and gateway introspection.
+---
+
+The gateway exposes five **native tools** that are always available, regardless of whether any downstream servers are connected.
+
+## Skill Tools
+
+### `skills__list`
+
+Lists all available skills with their metadata.
+
+**Parameters:** None
+
+**Returns:** An array of skill metadata objects:
+
+```json
+[
+  {
+    "id": "typescript-best-practices",
+    "name": "TypeScript Best Practices",
+    "tags": ["typescript", "coding"],
+    "description": "Guidelines for writing clean TypeScript.",
+    "version": "1.0",
+    "author": "Jane Doe",
+    "created": "2026-01-15",
+    "updated": "2026-03-20"
+  }
+]
+```
+
+### `skills__search`
+
+Searches skills by a text query. The search is **case-insensitive** and matches against:
+- Skill name
+- Tags
+- Description
+- Full markdown content
+
+**Parameters:**
+
+| Name | Type | Description |
+|---|---|---|
+| `query` | `string` | The search query |
+
+**Returns:** An array of matching skill metadata objects (same format as `skills__list`).
+
+### `skills__get`
+
+Retrieves the full content of a specific skill, including both metadata and markdown body.
+
+**Parameters:**
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | `string` | The skill ID (filename without `.md`) |
+
+**Returns:** The complete skill object:
+
+```json
+{
+  "metadata": {
+    "id": "typescript-best-practices",
+    "name": "TypeScript Best Practices",
+    "tags": ["typescript", "coding"],
+    "description": "Guidelines for writing clean TypeScript.",
+    "version": "1.0",
+    "author": "Jane Doe",
+    "created": "2026-01-15",
+    "updated": "2026-03-20"
+  },
+  "content": "## Use strict mode\n\nEnable `strict: true`..."
+}
+```
+
+## Gateway Tools
+
+### `gateway__list_servers`
+
+Lists all configured downstream servers with their current connection status.
+
+**Parameters:** None
+
+**Returns:** An object mapping server keys to their status:
+
+```json
+{
+  "db": {
+    "name": "Database Tools",
+    "enabled": true,
+    "connected": true,
+    "toolCount": 5,
+    "resourceCount": 2,
+    "promptCount": 0
+  },
+  "ai": {
+    "name": "AI Helpers",
+    "enabled": true,
+    "connected": false,
+    "error": "Connection timeout"
+  }
+}
+```
+
+### `gateway__server_status`
+
+Gets detailed status information for a specific downstream server.
+
+**Parameters:**
+
+| Name | Type | Description |
+|---|---|---|
+| `serverKey` | `string` | The server key to query |
+
+**Returns:** Detailed status including connection state, capability counts, and any error information.

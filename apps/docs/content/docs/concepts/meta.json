@@ -1,0 +1,10 @@
+{
+  "title": "Concepts",
+  "defaultOpen": false,
+  "pages": [
+    "index",
+    "skills",
+    "mcp-gateway",
+    "downstream-servers"
+  ]
+}

@@ -1,0 +1,92 @@
+---
+title: Configuration
+description: How to configure the MCP gateway — config file format, server definitions, and runtime behavior.
+---
+
+The gateway reads its configuration from `~/.skill-management/config.json`. This file is created automatically on first launch with sensible defaults.
+
+## Config File Location
+
+```
+~/.skill-management/config.json
+```
+
+The desktop app reads and writes this file. The gateway watches it for changes and applies them automatically.
+
+## Full Example
+
+```json
+{
+  "version": "1.0",
+  "gateway": {
+    "autoStart": false
+  },
+  "servers": {
+    "database": {
+      "name": "Database Tools",
+      "enabled": true,
+      "transport": {
+        "type": "stdio",
+        "command": "bun",
+        "args": ["/path/to/db-server/index.ts"],
+        "env": {
+          "DATABASE_URL": "postgresql://localhost:5432/mydb"
+        }
+      }
+    },
+    "web-search": {
+      "name": "Web Search",
+      "enabled": true,
+      "transport": {
+        "type": "sse",
+        "url": "https://api.example.com/mcp",
+        "headers": {
+          "Authorization": "Bearer sk-abc123"
+        }
+      }
+    },
+    "ai-helpers": {
+      "name": "AI Helper Tools",
+      "enabled": false,
+      "transport": {
+        "type": "streamable-http",
+        "url": "https://ai.example.com/mcp"
+      }
+    }
+  },
+  "skills": {
+    "directory": "~/.skill-management/skills"
+  }
+}
+```
+
+## Field Reference
+
+For a complete reference of all configuration fields, see the [Config Reference](/docs/reference/config).
+
+## Config Watching
+
+The gateway uses `fs.watch()` to monitor the config file. Changes are:
+
+1. **Debounced** at 200ms to prevent rapid-fire reloads
+2. **Validated** against the Zod schema before being applied
+3. **Diffed** against the previous config to determine what changed
+
+Invalid config changes are logged and ignored — the gateway continues with the last valid configuration.
+
+## Default Configuration
+
+When no config file exists, a default is created:
+
+```json
+{
+  "version": "1.0",
+  "gateway": {
+    "autoStart": false
+  },
+  "servers": {},
+  "skills": {
+    "directory": "~/.skill-management/skills"
+  }
+}
+```

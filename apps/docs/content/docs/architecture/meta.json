@@ -1,0 +1,9 @@
+{
+  "title": "Architecture",
+  "defaultOpen": false,
+  "pages": [
+    "index",
+    "monorepo",
+    "data-flow"
+  ]
+}

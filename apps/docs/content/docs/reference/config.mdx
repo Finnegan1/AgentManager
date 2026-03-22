@@ -1,0 +1,135 @@
+---
+title: Config Reference
+description: Complete reference for the config.json configuration file.
+---
+
+Full reference for `~/.skill-management/config.json`.
+
+## Top-Level Fields
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `version` | `"1.0"` | Yes | Config schema version |
+| `gateway` | `object` | Yes | Gateway runtime settings |
+| `servers` | `Record<string, ServerConfig>` | Yes | Downstream server definitions |
+| `skills` | `object` | Yes | Skills directory configuration |
+
+## `gateway`
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `autoStart` | `boolean` | `false` | Whether to auto-start the gateway (reserved for future use) |
+
+## `servers`
+
+A map of server key → server configuration. The key is used as the namespace prefix for all proxied capabilities.
+
+**Server key rules:**
+- Must be unique across all servers
+- Used as the namespace prefix (e.g. `db__tool_name`)
+- Should be short and descriptive (e.g. `db`, `ai-tools`, `web-search`)
+
+### Server Configuration
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | `string` | Yes | Human-readable display name |
+| `enabled` | `boolean` | Yes | Whether the server is active |
+| `transport` | `TransportConfig` | Yes | Connection configuration |
+
+### Transport: stdio
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `type` | `"stdio"` | Yes | Transport type identifier |
+| `command` | `string` | Yes | Executable to launch |
+| `args` | `string[]` | No | Command-line arguments |
+| `env` | `Record<string, string>` | No | Environment variables |
+| `cwd` | `string` | No | Working directory for the process |
+
+```json
+{
+  "type": "stdio",
+  "command": "bun",
+  "args": ["/path/to/server.ts", "--verbose"],
+  "env": { "API_KEY": "sk-123", "DEBUG": "true" },
+  "cwd": "/path/to/project"
+}
+```
+
+### Transport: SSE
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `type` | `"sse"` | Yes | Transport type identifier |
+| `url` | `string` | Yes | HTTP endpoint URL |
+| `headers` | `Record<string, string>` | No | Custom HTTP headers |
+
+```json
+{
+  "type": "sse",
+  "url": "https://example.com/mcp",
+  "headers": { "Authorization": "Bearer token123" }
+}
+```
+
+### Transport: Streamable HTTP
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `type` | `"streamable-http"` | Yes | Transport type identifier |
+| `url` | `string` | Yes | HTTP endpoint URL |
+| `headers` | `Record<string, string>` | No | Custom HTTP headers |
+
+```json
+{
+  "type": "streamable-http",
+  "url": "https://example.com/mcp",
+  "headers": { "Authorization": "Bearer token123" }
+}
+```
+
+## `skills`
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `directory` | `string` | `"~/.skill-management/skills"` | Path to the skills directory |
+
+## Complete Example
+
+```json
+{
+  "version": "1.0",
+  "gateway": {
+    "autoStart": false
+  },
+  "servers": {
+    "database": {
+      "name": "Database Tools",
+      "enabled": true,
+      "transport": {
+        "type": "stdio",
+        "command": "bun",
+        "args": ["/path/to/db-mcp/index.ts"],
+        "env": {
+          "DATABASE_URL": "postgresql://localhost:5432/mydb"
+        }
+      }
+    },
+    "remote-api": {
+      "name": "Remote API",
+      "enabled": true,
+      "transport": {
+        "type": "sse",
+        "url": "https://api.example.com/mcp",
+        "headers": {
+          "Authorization": "Bearer sk-abc123"
+        }
+      }
+    }
+  },
+  "skills": {
+    "directory": "~/.skill-management/skills"
+  }
+}
+```

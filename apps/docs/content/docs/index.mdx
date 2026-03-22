@@ -1,31 +1,32 @@
 ---
-title: Hello World
-description: Your favourite docs framework.
-icon: Rocket
+title: Skill Gateway
+description: Manage AI skills and proxy multiple MCP servers through a single unified gateway.
 ---
 
-Hey there! Fumadocs is the docs framework that also works on Tanstack Start!
+**Skill Gateway** is a desktop application and MCP (Model Context Protocol) gateway that lets you manage reusable AI skills as markdown documents and proxy multiple downstream MCP servers through a single, unified endpoint. Instead of connecting your AI client to many servers individually, you connect it to Skill Gateway once — and it handles the rest.
 
-## Heading
+## Key Features
 
-Hello World!
+- **Skill Management** — Create, edit, search, and organize skills as markdown files with YAML frontmatter metadata
+- **MCP Gateway** — Proxy tools, resources, and prompts from multiple downstream MCP servers through one connection
+- **Desktop App** — A native Tauri application with a full-featured dashboard for managing everything
+- **Vim-Powered Editor** — Built-in CodeMirror 6 editor with Vim keybindings for editing skill content
+- **Hot-Reload Config** — Change server configurations on the fly; the gateway picks up changes automatically
+- **Three Transport Types** — Connect to downstream servers via stdio, SSE, or streamable HTTP
+
+## Get Started
 
 <Cards>
-  <Card title="Learn more about Tanstack Start" href="https://tanstack.com/start" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
+  <Card title="Quick Start" href="/docs/getting-started/quick-start">
+    Get up and running in 5 minutes.
+  </Card>
+  <Card title="Core Concepts" href="/docs/concepts">
+    Understand skills, the gateway, and downstream servers.
+  </Card>
+  <Card title="Architecture" href="/docs/architecture">
+    How the system is built and how data flows through it.
+  </Card>
+  <Card title="Reference" href="/docs/reference/config">
+    Full configuration and format reference.
+  </Card>
 </Cards>
-
-### CodeBlock
-
-```ts
-console.log('Hello World');
-```
-
-#### Table
-
-| Head                            | Description                         |
-| ------------------------------- | ----------------------------------- |
-| `hello`                         | Hello World                         |
-| very **important**              | Hey                                 |
-| _Surprisingly_                  | Fumadocs                            |
-| very long text that looks weird | hello world hello world hello world |

@@ -1,0 +1,9 @@
+{
+  "title": "Reference",
+  "defaultOpen": false,
+  "pages": [
+    "config",
+    "skill-format",
+    "file-paths"
+  ]
+}

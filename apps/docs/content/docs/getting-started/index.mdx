@@ -1,0 +1,68 @@
+---
+title: Getting Started
+description: Prerequisites, installation, and first launch of Skill Gateway.
+---
+
+## Prerequisites
+
+Before you begin, make sure you have the following installed:
+
+| Requirement | Version | Purpose |
+|---|---|---|
+| [Bun](https://bun.sh) | 1.3.11+ | Package manager and runtime |
+| [Node.js](https://nodejs.org) | 18+ | Required by some tooling |
+| [Rust](https://rustup.rs) | Latest stable | Tauri desktop app backend |
+
+You'll also need the Tauri CLI prerequisites for your platform. See the [Tauri prerequisites guide](https://v2.tauri.app/start/prerequisites/) for details.
+
+## Installation
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/Finnegan1/skills-mcp.git
+cd skills-mcp/skill-management
+bun install
+```
+
+## First Launch
+
+Start the desktop app in development mode:
+
+```bash
+cd apps/skill-manager
+bun run tauri dev
+```
+
+This will:
+1. Start the Vite dev server for the React frontend
+2. Compile and launch the Tauri (Rust) backend
+3. Open the Skill Gateway desktop application
+
+On first launch, the app creates the configuration directory at `~/.skill-management/` with a default `config.json` and an empty `skills/` folder.
+
+## Starting the MCP Gateway
+
+The MCP gateway server runs separately from the desktop app. To start it:
+
+```bash
+cd apps/skill-mcp
+bun run src/index.ts
+```
+
+Or, if you've configured your AI client (e.g. Claude) to use it, the gateway starts automatically when the client connects via the MCP protocol.
+
+<Callout>
+  The desktop app and the MCP gateway communicate through shared files on disk — they don't need a direct network connection. The gateway writes its status to `~/.skill-management/status.json`, and the desktop app polls it every 5 seconds.
+</Callout>
+
+## Next Steps
+
+<Cards>
+  <Card title="Quick Start" href="/docs/getting-started/quick-start">
+    Follow a 5-minute walkthrough to create your first skill and connect a server.
+  </Card>
+  <Card title="Core Concepts" href="/docs/concepts">
+    Understand the building blocks: skills, the gateway, and downstream servers.
+  </Card>
+</Cards>

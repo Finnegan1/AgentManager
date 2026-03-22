@@ -1,0 +1,136 @@
+---
+title: Skill File Format
+description: Complete reference for the skill markdown file format with YAML frontmatter.
+---
+
+Skills are stored as markdown files (`.md`) with YAML frontmatter metadata. This page documents the complete format.
+
+## File Structure
+
+Every skill file has two parts separated by the `---` delimiters:
+
+```markdown
+---
+name: "Skill Name"
+tags: ["tag1", "tag2"]
+description: "A short description of what this skill covers."
+version: "1.0"
+author: "Author Name"
+created: "2026-01-15"
+updated: "2026-03-20"
+---
+
+# Heading
+
+Your markdown content goes here. This is the skill body that
+the AI assistant will read when it retrieves this skill.
+```
+
+## Frontmatter Fields
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | `string` | Yes | Human-readable display name |
+| `tags` | `string[]` | Yes | Tags for categorization and search |
+| `description` | `string` | Yes | Short description (shown in skill cards and search results) |
+| `version` | `string` | Yes | Version identifier (e.g. `"1.0"`, `"2.3"`) |
+| `author` | `string` | Yes | Author name |
+| `created` | `string` | Yes | ISO date of creation (e.g. `"2026-01-15"`) |
+| `updated` | `string` | Yes | ISO date of last modification |
+
+## Filename Convention
+
+The filename (without `.md`) becomes the **skill ID**:
+
+| Filename | Skill ID |
+|---|---|
+| `typescript-best-practices.md` | `typescript-best-practices` |
+| `react-patterns.md` | `react-patterns` |
+| `api-design.md` | `api-design` |
+
+The skill ID is used in all MCP tool calls (`skills__get`, etc.) and must be unique.
+
+## Body Content
+
+The body can contain any valid markdown:
+
+- Headings (`##`, `###`, etc.)
+- Lists (ordered and unordered)
+- Code blocks with syntax highlighting
+- Tables
+- Links
+- Bold, italic, strikethrough
+- Blockquotes
+
+## Complete Example
+
+```markdown
+---
+name: "React Component Patterns"
+tags: ["react", "components", "patterns", "frontend"]
+description: "Common React component patterns including composition, render props, and hooks."
+version: "2.0"
+author: "Jane Doe"
+created: "2026-01-10"
+updated: "2026-03-18"
+---
+
+## Composition Pattern
+
+Prefer composition over inheritance. Use children or render props
+to make components flexible:
+
+\`\`\`tsx
+function Card({ children }: { children: React.ReactNode }) {
+  return <div className="card">{children}</div>;
+}
+
+function App() {
+  return (
+    <Card>
+      <h2>Title</h2>
+      <p>Content goes here.</p>
+    </Card>
+  );
+}
+\`\`\`
+
+## Custom Hooks
+
+Extract reusable logic into custom hooks:
+
+\`\`\`tsx
+function useLocalStorage<T>(key: string, initialValue: T) {
+  const [value, setValue] = useState<T>(() => {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : initialValue;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+
+  return [value, setValue] as const;
+}
+\`\`\`
+
+## Key Principles
+
+- Keep components small and focused
+- Lift state up only when necessary
+- Use TypeScript for prop type safety
+- Prefer controlled components for forms
+```
+
+## Storage Location
+
+Skills are stored in the configured skills directory:
+
+```
+~/.skill-management/skills/
+  typescript-best-practices.md
+  react-patterns.md
+  api-design.md
+```
+
+The directory path can be changed in the [configuration](/docs/reference/config) via the `skills.directory` field.

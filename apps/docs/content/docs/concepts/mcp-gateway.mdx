@@ -1,0 +1,88 @@
+---
+title: MCP Gateway
+description: How the gateway proxies multiple MCP servers through a single unified endpoint.
+---
+
+The **MCP gateway** is the heart of Skill Gateway. It's a Model Context Protocol server that aggregates multiple downstream MCP servers and your local skill library into a single connection point.
+
+## The Problem It Solves
+
+Without a gateway, your AI client needs a separate connection for each MCP server you want to use. Managing 5, 10, or more individual server connections becomes unwieldy — each with its own configuration, lifecycle, and potential for naming conflicts.
+
+The gateway solves this by acting as a **single MCP server** that your client connects to. Behind the scenes, it connects to all your downstream servers and proxies their capabilities transparently.
+
+## How It Works
+
+```
+AI Client (e.g. Claude)
+    │
+    ▼
+┌─────────────────────────────┐
+│       Skill Gateway         │
+│  (MCP Server on stdio)      │
+│                             │
+│  ┌─────────────────────┐    │
+│  │   Native Tools      │    │
+│  │  • skills__list     │    │
+│  │  • skills__search   │    │
+│  │  • skills__get      │    │
+│  │  • gateway__list    │    │
+│  │  • gateway__status  │    │
+│  └─────────────────────┘    │
+│                             │
+│  ┌─────────────────────┐    │
+│  │   Proxy Manager     │    │
+│  │  ┌───────────────┐  │    │
+│  │  │ Tool Registry  │  │    │
+│  │  │ Resource Reg.  │  │    │
+│  │  │ Prompt Reg.    │  │    │
+│  │  └───────────────┘  │    │
+│  └─────────────────────┘    │
+└────────┬──────┬──────┬──────┘
+         │      │      │
+    ┌────▼─┐ ┌─▼───┐ ┌▼─────┐
+    │ MCP  │ │ MCP │ │ MCP  │
+    │Srv A │ │Srv B│ │Srv C │
+    └──────┘ └─────┘ └──────┘
+```
+
+## Namespacing
+
+To prevent name collisions between downstream servers, the gateway prefixes all proxied items with the **server key**:
+
+| Type | Original Name | Gateway Name |
+|---|---|---|
+| Tool | `run_query` on server `db` | `db__run_query` |
+| Resource | `schema://tables` on server `db` | `db://schema://tables` |
+| Prompt | `analyze` on server `ai` | `ai__analyze` |
+
+The double-underscore `__` separator for tools and prompts, and the `serverKey://` prefix for resources, ensure that items from different servers never collide.
+
+## Native Tools
+
+The gateway exposes five built-in tools that are always available, regardless of downstream server connections:
+
+| Tool | Description |
+|---|---|
+| `skills__list` | List all skills with metadata |
+| `skills__search` | Search skills by query |
+| `skills__get` | Get full skill content by ID |
+| `gateway__list_servers` | List all downstream servers and their connection status |
+| `gateway__server_status` | Get detailed status of a specific downstream server |
+
+## Hot-Reload
+
+The gateway watches the configuration file (`~/.skill-management/config.json`) for changes. When you add, remove, enable, disable, or modify a downstream server in the desktop app:
+
+1. The config file is updated on disk
+2. The gateway's `ConfigStore` detects the change (debounced at 200ms)
+3. The `ProxyManager` diffs the old and new configurations
+4. New servers are connected, removed servers are disconnected, changed servers are reconnected
+5. The tool/resource/prompt registries are updated
+6. A `listChanged` notification is sent to the connected AI client
+
+This means you never need to restart the gateway to apply configuration changes.
+
+## Auto-Reconnect
+
+If a downstream server connection drops, the gateway automatically attempts to reconnect with exponential backoff — up to 10 retries with a maximum delay of 30 seconds between attempts.

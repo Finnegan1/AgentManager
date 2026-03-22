@@ -1,0 +1,83 @@
+---
+title: Skills
+description: What skills are, how they're formatted, and how they're stored.
+---
+
+A **skill** is a markdown document that encodes reusable knowledge for your AI assistant. Skills are the core data type in Skill Gateway.
+
+## What is a Skill?
+
+Skills are plain markdown files enhanced with YAML frontmatter metadata. They can represent anything you want your AI to know:
+
+- Coding guidelines and best practices
+- API documentation and usage patterns
+- Workflow instructions
+- Framework-specific knowledge
+- Team conventions and standards
+
+When your AI client connects to the Skill Gateway, it can list, search, and read skills through the MCP protocol — giving it structured access to your curated knowledge base.
+
+## File Format
+
+Every skill file has two parts: a **YAML frontmatter** header and a **markdown body**.
+
+```markdown
+---
+name: "TypeScript Best Practices"
+tags: ["typescript", "coding"]
+description: "Guidelines for writing clean TypeScript."
+version: "1.0"
+author: "Jane Doe"
+created: "2026-01-15"
+updated: "2026-03-20"
+---
+
+## Use strict mode
+
+Enable `strict: true` in your tsconfig.json for maximum type safety.
+
+## Prefer interfaces over type aliases
+
+Use `interface` for object shapes and `type` for unions, intersections, and primitives.
+```
+
+## Metadata Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | `string` | Human-readable display name |
+| `tags` | `string[]` | Tags for categorization and search |
+| `description` | `string` | Short description shown in listings |
+| `version` | `string` | Version string (e.g. `"1.0"`) |
+| `author` | `string` | Author name |
+| `created` | `string` | ISO date of creation (e.g. `"2026-01-15"`) |
+| `updated` | `string` | ISO date of last update |
+
+## Storage
+
+Skills are stored as individual `.md` files in the skills directory:
+
+```
+~/.skill-management/skills/
+  typescript-best-practices.md
+  react-patterns.md
+  api-design-guidelines.md
+```
+
+The filename (without `.md`) becomes the **skill ID**. This ID is used in all API calls (`skills__get`, `skills__search`, etc.).
+
+<Callout>
+  The skills directory path defaults to `~/.skill-management/skills/` but can be changed in the [configuration](/docs/reference/config).
+</Callout>
+
+## How Skills Are Accessed
+
+Skills are accessed through the MCP gateway's native tools:
+
+| Tool | Description |
+|---|---|
+| `skills__list` | Lists all skills with their metadata |
+| `skills__search` | Searches skills by query (matches name, tags, description, and content) |
+| `skills__get` | Retrieves the full content of a specific skill by ID |
+
+The search is case-insensitive and checks across all metadata fields as well as the markdown body content.

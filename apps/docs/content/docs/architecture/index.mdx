@@ -1,0 +1,95 @@
+---
+title: Architecture
+description: High-level architecture of Skill Gateway — how the components fit together.
+---
+
+Skill Gateway is composed of three main components that work together through shared files on disk.
+
+## System Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     AI Client (e.g. Claude)                 │
+│                         connects via MCP                    │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ stdio
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   MCP Gateway Server                        │
+│                   (Node.js / Bun)                           │
+│                                                             │
+│  ┌──────────┐  ┌──────────────┐  ┌───────────────────────┐ │
+│  │  Skill   │  │   Config     │  │    Proxy Manager      │ │
+│  │ Manager  │  │   Store      │  │  ┌─────────────────┐  │ │
+│  │          │  │              │  │  │  Tool Registry   │  │ │
+│  │ list     │  │ watches      │  │  │  Resource Reg.   │  │ │
+│  │ search   │  │ config.json  │  │  │  Prompt Reg.     │  │ │
+│  │ get      │  │              │  │  └─────────────────┘  │ │
+│  └──────────┘  └──────────────┘  └───────┬───┬───┬───────┘ │
+│       │              │                   │   │   │         │
+└───────┼──────────────┼───────────────────┼───┼───┼─────────┘
+        │              │                   │   │   │
+   reads from     reads/watches        connects to
+        │              │                   │   │   │
+        ▼              ▼                   ▼   ▼   ▼
+┌─────────────────────────────┐    ┌───┐ ┌───┐ ┌───┐
+│  ~/.skill-management/       │    │MCP│ │MCP│ │MCP│
+│  ├── config.json            │    │ A │ │ B │ │ C │
+│  ├── skills/*.md            │    └───┘ └───┘ └───┘
+│  └── status.json            │    Downstream Servers
+└──────────────┬──────────────┘
+               │
+          reads/writes
+               │
+               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Skill Manager Desktop App                  │
+│                  (Tauri: React + Rust)                      │
+│                                                             │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │  React Frontend                                      │  │
+│  │  • Dashboard (status overview)                       │  │
+│  │  • Server Management (add/edit/toggle servers)       │  │
+│  │  • Skill Management (create/edit/search/delete)      │  │
+│  └──────────────────────┬───────────────────────────────┘  │
+│                         │ Tauri IPC                         │
+│  ┌──────────────────────▼───────────────────────────────┐  │
+│  │  Rust Backend                                        │  │
+│  │  • Config commands (read/write config.json)          │  │
+│  │  • Skill commands (CRUD on skills/*.md)              │  │
+│  │  • Gateway commands (read status.json, verify PID)   │  │
+│  └──────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Component Responsibilities
+
+### MCP Gateway Server (`apps/skill-mcp/`)
+
+The Node.js/Bun process that runs as an MCP server:
+
+- **Serves skills** from `~/.skill-management/skills/` via native tools
+- **Proxies downstream servers** — connects to all enabled servers, namespaces their capabilities, and forwards requests
+- **Watches configuration** — picks up changes to `config.json` without restart
+- **Writes status** — periodically writes its PID and connection states to `status.json`
+
+### Desktop App (`apps/skill-manager/`)
+
+A Tauri application with a React frontend and Rust backend:
+
+- **React frontend** provides the GUI for managing skills, servers, and viewing status
+- **Rust backend** handles file I/O (config, skills) and process status verification
+- **Communicates via Tauri IPC** — the frontend calls typed Rust commands
+- **Polls gateway status** by reading `status.json` every 5 seconds
+
+### Shared Files on Disk (`~/.skill-management/`)
+
+The gateway and desktop app don't communicate directly. Instead, they share three types of files:
+
+| File | Written by | Read by | Purpose |
+|---|---|---|---|
+| `config.json` | Desktop App | Gateway (watched) | Server configuration, settings |
+| `skills/*.md` | Desktop App | Gateway | Skill content files |
+| `status.json` | Gateway | Desktop App (polled) | Gateway runtime status |
+
+This file-based IPC keeps the two processes fully decoupled — either can run independently.

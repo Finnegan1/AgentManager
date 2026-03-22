@@ -1,0 +1,40 @@
+---
+title: Dashboard
+description: The dashboard page — gateway status, server connections, and system metrics at a glance.
+---
+
+The **Dashboard** is the landing page of the Skill Manager app. It gives you a quick overview of the entire system.
+
+## Gateway Status
+
+At the top of the dashboard, a status card shows whether the MCP gateway is currently running:
+
+- **Running** (green badge) — The gateway process is active, with its PID and start time displayed
+- **Stopped** (red badge) — No gateway process detected
+
+The app determines this by reading `~/.skill-management/status.json` and verifying the reported PID is still a running process.
+
+## Metrics Overview
+
+Four summary cards show key metrics:
+
+| Metric | Description |
+|---|---|
+| **Connected Servers** | Number of downstream servers that are currently connected, out of total configured |
+| **Proxied Tools** | Total number of tools available from all connected downstream servers |
+| **Resources** | Total number of resources from all connected downstream servers |
+| **Skills** | Total number of skill files in your skills directory |
+
+## Server Connection Details
+
+A table lists each enabled downstream server with:
+
+- **Connection status** — Green dot (connected), yellow dot (connecting), or red dot (error)
+- **Tool count** — Number of tools this server exposes
+- **Resource count** — Number of resources this server exposes
+- **Prompt count** — Number of prompts this server exposes
+- **Error message** — If the connection failed, the error reason is shown
+
+## Status Polling
+
+The dashboard polls the gateway status every **5 seconds**. To prevent UI flickering from brief network interruptions, the app uses **disconnect stabilization**: a server is only shown as disconnected after two consecutive polls report it as down.

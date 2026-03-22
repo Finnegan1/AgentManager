@@ -1,0 +1,82 @@
+---
+title: Proxying
+description: How the gateway namespaces and forwards tools, resources, and prompts from downstream servers.
+---
+
+The gateway's primary function is **proxying** — it connects to your downstream MCP servers, discovers their capabilities, and makes them available to your AI client through a unified namespace.
+
+## Namespacing Scheme
+
+Each downstream server has a unique **server key** (e.g. `db`, `ai-tools`). This key is used to prefix all proxied items to prevent naming collisions.
+
+### Tools
+
+Tools are prefixed with `serverKey__` (double underscore):
+
+| Server Key | Original Tool | Gateway Tool |
+|---|---|---|
+| `db` | `run_query` | `db__run_query` |
+| `db` | `list_tables` | `db__list_tables` |
+| `ai-tools` | `summarize` | `ai-tools__summarize` |
+
+Tool descriptions are also prefixed: `[db] Execute a SQL query`
+
+### Resources
+
+Resources use a URI-based namespace with `serverKey://`:
+
+| Server Key | Original URI | Gateway URI |
+|---|---|---|
+| `db` | `schema://tables` | `db://schema://tables` |
+| `files` | `file:///data/report.csv` | `files://file:///data/report.csv` |
+
+Resource names are prefixed: `[db] Database Schema`
+
+### Prompts
+
+Prompts follow the same pattern as tools with `serverKey__`:
+
+| Server Key | Original Prompt | Gateway Prompt |
+|---|---|---|
+| `ai-tools` | `analyze` | `ai-tools__analyze` |
+| `ai-tools` | `summarize` | `ai-tools__summarize` |
+
+## Request Routing
+
+When the AI client calls a proxied tool, the gateway:
+
+1. **Parses** the namespaced name to extract the server key and original name
+2. **Looks up** the downstream connection for that server key
+3. **Forwards** the request to the downstream server with the original (un-prefixed) name
+4. **Returns** the response back to the AI client
+
+This is fully transparent to both the AI client and the downstream server.
+
+```
+Client calls: db__run_query({ sql: "SELECT * FROM users" })
+                    │
+Gateway parses: server="db", tool="run_query"
+                    │
+Forwards to db server: run_query({ sql: "SELECT * FROM users" })
+                    │
+Response flows back to client
+```
+
+## Capability Discovery
+
+When a downstream server connects, the gateway discovers its capabilities by calling:
+
+- `listTools()` — registers all tools in the ToolRegistry
+- `listResources()` — registers all resources in the ResourceRegistry
+- `listResourceTemplates()` — registers resource templates
+- `listPrompts()` — registers all prompts in the PromptRegistry
+
+These are cached in the registries. If a downstream server disconnects, its capabilities are removed from the registries.
+
+## List Changed Notifications
+
+Whenever the set of available capabilities changes (server connects, disconnects, or config changes), the gateway sends a **listChanged** notification to the AI client. This tells the client to re-fetch the list of available tools, resources, or prompts.
+
+## Only Connected Servers
+
+Only capabilities from **currently connected** servers are exposed. If a server is configured but disabled or in an error state, its tools, resources, and prompts are not listed.

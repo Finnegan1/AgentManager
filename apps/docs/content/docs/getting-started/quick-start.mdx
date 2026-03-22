@@ -1,0 +1,91 @@
+---
+title: Quick Start
+description: Get up and running with Skill Gateway in 5 minutes.
+---
+
+This walkthrough takes you from zero to a working setup with a skill and a connected downstream server.
+
+## Step 1: Launch the App
+
+```bash
+cd skills-mcp/skill-management/apps/skill-manager
+bun run tauri dev
+```
+
+The Skill Gateway desktop app opens. You'll see the **Dashboard** page — everything will be empty at first.
+
+## Step 2: Create Your First Skill
+
+1. Click **Skills** in the sidebar
+2. Click **Skill erstellen** (Create Skill)
+3. Enter a **Skill-ID**, for example: `typescript-best-practices`
+4. The editor opens with a template. Fill in the YAML frontmatter:
+
+```markdown
+---
+name: "TypeScript Best Practices"
+tags: ["typescript", "coding", "best-practices"]
+description: "Guidelines for writing clean, idiomatic TypeScript code."
+version: "1.0"
+author: "Your Name"
+created: "2026-03-22"
+updated: "2026-03-22"
+---
+
+## Prefer `const` over `let`
+
+Always use `const` for variables that are never reassigned.
+
+## Use strict TypeScript config
+
+Enable `strict: true` in your `tsconfig.json` for maximum type safety.
+```
+
+5. Click **Speichern** (Save)
+
+Your skill is now stored at `~/.skill-management/skills/typescript-best-practices.md` and is immediately available through the MCP gateway.
+
+## Step 3: Add a Downstream Server
+
+1. Click **Server** in the sidebar
+2. Click **Server hinzufügen** (Add Server)
+3. Fill in the form:
+   - **Server-Key**: `my-server`
+   - **Name**: `My MCP Server`
+   - **Transport-Typ**: `stdio`
+   - **Command**: The command to launch your MCP server (e.g. `bun`, `node`, `npx`)
+   - **Arguments**: The arguments (e.g. `/path/to/server.ts`)
+4. Click **Speichern** (Save)
+
+The server appears in your list. Toggle the **Aktiviert** (Enabled) switch to connect it.
+
+## Step 4: Connect Your AI Client
+
+Add the Skill Gateway MCP server to your AI client's configuration. For example, in Claude's `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "skill-gateway": {
+      "command": "bun",
+      "args": ["/path/to/skills-mcp/skill-management/apps/skill-mcp/src/index.ts"]
+    }
+  }
+}
+```
+
+Once connected, your AI client can:
+- Use `skills__list` to see all your skills
+- Use `skills__search` to find relevant skills by query
+- Use `skills__get` to read the full content of a skill
+- Access all tools from your downstream servers (prefixed with the server key)
+
+## Step 5: Verify on the Dashboard
+
+Go back to the **Dashboard** page. You should see:
+- **Gateway Status**: Running (with PID and start time)
+- **Connected Servers**: Your downstream server count
+- **Proxied Tools**: The number of tools available through the gateway
+- **Skills**: The total number of skills you've created
+
+You're all set! The gateway proxies all downstream tools under a unified namespace, and your skills are available as searchable knowledge for your AI assistant.

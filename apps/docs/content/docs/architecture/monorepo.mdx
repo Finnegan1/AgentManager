@@ -1,0 +1,88 @@
+---
+title: Monorepo Structure
+description: How the codebase is organized as a Turborepo monorepo.
+---
+
+Skill Gateway uses a **Turborepo** monorepo with **Bun** as the package manager. All applications and shared packages live in a single repository.
+
+## Directory Layout
+
+```
+skill-management/
+├── apps/
+│   ├── skill-manager/       # Tauri desktop app (React + Rust)
+│   ├── skill-mcp/           # MCP gateway server (Node.js/Bun)
+│   └── docs/                # Documentation site (Fumadocs)
+├── packages/
+│   ├── shared-types/        # TypeScript type definitions
+│   ├── ui/                  # Shared React UI components
+│   ├── eslint-config/       # Shared ESLint configuration
+│   └── typescript-config/   # Shared TypeScript configuration
+├── package.json             # Root workspace configuration
+├── turbo.json               # Turborepo task configuration
+└── bun.lock                 # Dependency lockfile
+```
+
+## Applications
+
+### `apps/skill-manager/`
+
+The Tauri desktop application.
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 19, Vite 7, Tailwind CSS 4, shadcn/ui, CodeMirror 6 |
+| Backend | Rust (Tauri 2.0) |
+| IPC | Tauri command system |
+
+The frontend lives in `src/` and the Rust backend in `src-tauri/`.
+
+### `apps/skill-mcp/`
+
+The MCP gateway server.
+
+| Aspect | Technology |
+|---|---|
+| Runtime | Node.js / Bun |
+| MCP SDK | `@modelcontextprotocol/sdk` v1.12 |
+| Transport | stdio (with MCP client) |
+| Config | Zod schema validation |
+
+### `apps/docs/`
+
+This documentation site.
+
+| Aspect | Technology |
+|---|---|
+| Framework | Fumadocs on TanStack Start (SPA mode) |
+| Content | MDX files with YAML frontmatter |
+| Search | Orama full-text search |
+
+## Shared Packages
+
+### `packages/shared-types/`
+
+TypeScript type definitions used across all applications:
+
+- `Skill`, `SkillMetadata` — skill data types
+- `SkillManagementConfig` — configuration structure
+- `DownstreamServerConfig`, `TransportConfig` — server connection types
+- `GatewayStatus` — runtime status types
+
+### `packages/ui/`
+
+Shared React UI components. The desktop app primarily uses its own shadcn/ui component library in `apps/skill-manager/src/components/ui/`.
+
+### `packages/eslint-config/` and `packages/typescript-config/`
+
+Shared configuration for ESLint and TypeScript, ensuring consistent code style and compiler settings across all packages.
+
+## Build System
+
+Turborepo orchestrates builds with task dependencies defined in `turbo.json`. Key tasks:
+
+- **`build`** — Compiles all applications and packages
+- **`dev`** — Starts development servers
+- **`lint`** — Runs ESLint across the workspace
+
+Dependencies between packages are resolved automatically — for example, `apps/skill-manager` depends on `packages/shared-types`, so Turbo ensures types are built first.

@@ -1,0 +1,176 @@
+---
+title: Data Flow
+description: How data flows through the system — skill writes, config changes, tool proxying, and status polling.
+---
+
+Understanding the data flows in Skill Gateway helps you reason about how changes propagate through the system.
+
+## Skill Write Flow
+
+When a user creates or edits a skill in the desktop app:
+
+```
+User edits in CodeMirror editor
+    │
+    ▼
+React frontend calls saveSkill(id, content)
+    │
+    ▼
+Tauri IPC → Rust backend
+    │
+    ▼
+Rust writes ~/.skill-management/skills/{id}.md
+    │
+    ▼
+Frontend reloads skill list
+```
+
+The MCP gateway reads skills on demand (when `skills__list`, `skills__search`, or `skills__get` are called), so new skills are available immediately without any restart or notification.
+
+## Configuration Change Flow
+
+When a user modifies server configuration in the desktop app:
+
+```
+User adds/edits/toggles a server
+    │
+    ▼
+React frontend calls saveConfig(config)
+    │
+    ▼
+Tauri IPC → Rust backend
+    │
+    ▼
+Rust atomically writes ~/.skill-management/config.json
+    │                    (write to temp file, then rename)
+    ▼
+Gateway's ConfigStore detects file change (fs.watch)
+    │                    (debounced 200ms)
+    ▼
+ConfigStore validates new config (Zod schema)
+    │
+    ▼
+ConfigStore emits "changed" event
+    │
+    ▼
+ProxyManager diffs old ↔ new config
+    │
+    ├── New servers → create DownstreamConnection, connect
+    ├── Removed servers → disconnect, clean up
+    ├── Changed servers → disconnect old, reconnect new
+    └── Disabled servers → disconnect, remove from registries
+    │
+    ▼
+Registries updated (tools, resources, prompts)
+    │
+    ▼
+MCP "listChanged" notification sent to AI client
+```
+
+<Callout>
+  Config writes use an atomic pattern (write to temp file, then rename) to prevent partial writes from crashing the gateway.
+</Callout>
+
+## Tool Proxying Flow
+
+When an AI client calls a proxied tool through the gateway:
+
+```
+AI Client calls tool "db__run_query" with args
+    │
+    ▼
+Gateway receives CallToolRequest
+    │
+    ▼
+ToolRegistry.resolveToolCall("db__run_query")
+    │
+    ├── Parses namespace: server="db", tool="run_query"
+    └── Looks up DownstreamConnection for "db"
+    │
+    ▼
+DownstreamConnection.callTool("run_query", args)
+    │
+    ▼
+Downstream MCP server "db" executes the tool
+    │
+    ▼
+Result flows back through the gateway to the AI client
+```
+
+The same pattern applies to resource reads and prompt requests — the gateway resolves the namespace, finds the correct downstream connection, and forwards the request.
+
+## Gateway Status Polling
+
+The desktop app monitors the gateway's status through a shared file:
+
+```
+MCP Gateway (running as separate process)
+    │
+    │  Every 5 seconds:
+    ▼
+Writes ~/.skill-management/status.json
+    │  {
+    │    "pid": 12345,
+    │    "startedAt": "2026-03-22T10:00:00Z",
+    │    "servers": {
+    │      "db": { "connected": true, "toolCount": 5, ... },
+    │      "ai": { "connected": false, "error": "timeout", ... }
+    │    }
+    │  }
+    │
+    ▼
+Desktop App polls every 5 seconds:
+    │
+    ▼
+Tauri IPC → Rust reads status.json
+    │
+    ▼
+Rust verifies PID is still running
+    │  (Unix: kill -0; Windows: tasklist)
+    │
+    ├── PID alive → return status as-is
+    └── PID dead → clean up stale file, return "not running"
+    │
+    ▼
+React frontend applies disconnect stabilization
+    │  (requires 2 consecutive "disconnected" polls
+    │   before marking a server as disconnected)
+    │
+    ▼
+Dashboard UI updates
+```
+
+<Callout type="warn">
+  The disconnect stabilization logic prevents the UI from flickering when a downstream server briefly disconnects and reconnects. A server is only shown as disconnected after two consecutive polls report it as down.
+</Callout>
+
+## Downstream Server Connection Flow
+
+When a new downstream server is added and enabled:
+
+```
+ProxyManager creates DownstreamConnection
+    │
+    ▼
+Connection creates appropriate transport:
+    ├── stdio: spawn child process
+    ├── SSE: HTTP connection with EventSource
+    └── streamable-http: HTTP connection
+    │
+    ▼
+MCP Client connects to downstream server
+    │
+    ▼
+Capability discovery:
+    ├── listTools() → tools registered in ToolRegistry
+    ├── listResources() → resources registered in ResourceRegistry
+    └── listPrompts() → prompts registered in PromptRegistry
+    │
+    ▼
+Connection marked as "connected"
+    │
+    ▼
+Gateway sends "listChanged" notification to AI client
+```
+
+If the connection fails, exponential backoff retry kicks in — up to 10 attempts with a maximum 30-second delay between retries.
