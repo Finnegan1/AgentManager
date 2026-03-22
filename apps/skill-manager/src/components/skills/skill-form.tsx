@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { CodeMirrorEditor } from "@/components/ui/codemirror-editor";
 
 interface SkillFormProps {
   open: boolean;
@@ -62,14 +62,14 @@ export function SkillForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[95vw] h-[93vh] max-h-[93vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Skill bearbeiten" : "Skill erstellen"}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+        <div className="space-y-4 flex-1 overflow-hidden flex flex-col min-h-0">
           <div className="space-y-2">
             <Label htmlFor="skillId">Skill-ID (Dateiname ohne .md)</Label>
             <Input
@@ -82,14 +82,13 @@ export function SkillForm({
           </div>
 
           <div className="space-y-2 flex-1 flex flex-col min-h-0">
-            <Label htmlFor="content">
+            <Label>
               Inhalt (Markdown mit YAML-Frontmatter)
             </Label>
-            <Textarea
-              id="content"
+            <CodeMirrorEditor
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="flex-1 font-mono text-sm min-h-[300px] resize-none"
+              onChange={setContent}
+              className="flex-1 min-h-0"
             />
           </div>
         </div>
