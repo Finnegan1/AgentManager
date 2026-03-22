@@ -18,6 +18,7 @@ export function SkillList() {
   const { skills, loadSkill, createSkill, updateSkill, removeSkill } = useSkills();
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
+  const [formKey, setFormKey] = useState(0);
   const [editingSkill, setEditingSkill] = useState<{
     id: string;
     content: string;
@@ -49,6 +50,7 @@ created: "${skill.metadata.created}"
 updated: "${new Date().toISOString().split("T")[0]}"
 ---`;
       setEditingSkill({ id, content: `${frontmatter}\n\n${skill.content}` });
+      setFormKey((k) => k + 1);
       setFormOpen(true);
     } catch (err) {
       console.error("Failed to load skill:", err);
@@ -66,6 +68,7 @@ updated: "${new Date().toISOString().split("T")[0]}"
 
   const handleAdd = () => {
     setEditingSkill(null);
+    setFormKey((k) => k + 1);
     setFormOpen(true);
   };
 
@@ -179,6 +182,7 @@ updated: "${new Date().toISOString().split("T")[0]}"
 
       {/* Skill Form Dialog */}
       <SkillForm
+        key={formKey}
         open={formOpen}
         onOpenChange={setFormOpen}
         onSave={handleSave}

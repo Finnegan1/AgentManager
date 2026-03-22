@@ -21,6 +21,7 @@ export function ServerList() {
   const { status } = useGatewayStatus();
   const [formOpen, setFormOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [formKey, setFormKey] = useState(0);
 
   if (!config) return null;
 
@@ -28,11 +29,13 @@ export function ServerList() {
 
   const handleEdit = (key: string) => {
     setEditingKey(key);
+    setFormKey((k) => k + 1);
     setFormOpen(true);
   };
 
   const handleAdd = () => {
     setEditingKey(null);
+    setFormKey((k) => k + 1);
     setFormOpen(true);
   };
 
@@ -146,6 +149,7 @@ export function ServerList() {
       )}
 
       <ServerForm
+        key={formKey}
         open={formOpen}
         onOpenChange={setFormOpen}
         onSave={handleSave}
