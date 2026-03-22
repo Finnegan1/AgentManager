@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "skill-gateway": {
+      "command": "bun",
+      "args": [
+        "/Users/finnegan/development/github.com/Finnegan1/skills-mcp/skill-management/apps/skill-mcp/src/index.ts"
+      ]
+    }
+  }
+}
