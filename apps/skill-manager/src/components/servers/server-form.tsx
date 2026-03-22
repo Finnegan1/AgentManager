@@ -85,8 +85,12 @@ export function ServerForm({
 
   const [saving, setSaving] = useState(false);
 
+  const isEditing = !!initialKey;
+  const serverKeyPattern = /^[a-zA-Z0-9_-]{1,64}$/;
+  const isServerKeyValid = isEditing || serverKeyPattern.test(serverKey.trim());
+
   const handleSave = async () => {
-    if (!serverKey.trim() || !name.trim()) return;
+    if (!serverKey.trim() || !name.trim() || !isServerKeyValid) return;
 
     let transport: TransportConfig;
 
@@ -166,8 +170,6 @@ export function ServerForm({
     }
   };
 
-  const isEditing = !!initialKey;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -188,6 +190,11 @@ export function ServerForm({
                 placeholder="z.B. github"
                 disabled={isEditing}
               />
+              {!isEditing && serverKey.trim() && !isServerKeyValid && (
+                <p className="text-xs text-destructive">
+                  Nur Buchstaben, Ziffern, _ und - erlaubt (max. 64 Zeichen)
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
@@ -299,7 +306,7 @@ export function ServerForm({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Abbrechen
           </Button>
-          <Button onClick={handleSave} disabled={saving || !serverKey.trim() || !name.trim()}>
+          <Button onClick={handleSave} disabled={saving || !serverKey.trim() || !name.trim() || !isServerKeyValid}>
             {saving ? "Speichern..." : "Speichern"}
           </Button>
         </DialogFooter>

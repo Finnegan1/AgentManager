@@ -20,5 +20,8 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "claude-code-acp-sdk": "^0.1.0"
+  }
 }

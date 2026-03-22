@@ -46,9 +46,11 @@ export function SkillForm({
   const [saving, setSaving] = useState(false);
 
   const isEditing = !!initialId;
+  const skillIdPattern = /^[a-zA-Z0-9_-]{1,64}$/;
+  const isSkillIdValid = isEditing || skillIdPattern.test(skillId.trim());
 
   const handleSave = async () => {
-    if (!skillId.trim()) return;
+    if (!skillId.trim() || !isSkillIdValid) return;
     try {
       setSaving(true);
       await onSave(skillId.trim(), content);
@@ -79,6 +81,11 @@ export function SkillForm({
               placeholder="z.B. typescript-best-practices"
               disabled={isEditing}
             />
+            {!isEditing && skillId.trim() && !isSkillIdValid && (
+              <p className="text-xs text-destructive">
+                Nur Buchstaben, Ziffern, _ und - erlaubt (max. 64 Zeichen)
+              </p>
+            )}
           </div>
 
           <div className="space-y-2 flex-1 flex flex-col min-h-0">
@@ -97,7 +104,7 @@ export function SkillForm({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Abbrechen
           </Button>
-          <Button onClick={handleSave} disabled={saving || !skillId.trim()}>
+          <Button onClick={handleSave} disabled={saving || !skillId.trim() || !isSkillIdValid}>
             {saving ? "Speichern..." : "Speichern"}
           </Button>
         </DialogFooter>

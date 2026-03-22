@@ -1,5 +1,6 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import type { DownstreamConnection } from "./downstream-connection.js";
+import { sanitizeServerKey } from "./sanitize.js";
 
 export interface NamespacedTool extends Tool {
   /** The original tool name (without namespace prefix) */
@@ -37,11 +38,12 @@ export class ToolRegistry {
 
     for (const [serverKey, connection] of this.connections) {
       if (connection.status !== "connected") continue;
+      const safeKey = sanitizeServerKey(serverKey);
 
       for (const tool of connection.capabilities.tools) {
         tools.push({
           ...tool,
-          name: `${serverKey}__${tool.name}`,
+          name: `${safeKey}__${tool.name}`,
           description: tool.description
             ? `[${serverKey}] ${tool.description}`
             : `[${serverKey}] ${tool.name}`,
@@ -66,16 +68,20 @@ export class ToolRegistry {
       return null;
     }
 
-    // Parse namespace: serverKey__toolName
+    // Parse namespace: sanitizedServerKey__toolName
     const separatorIndex = namespacedName.indexOf("__");
     if (separatorIndex === -1) return null;
 
-    const serverKey = namespacedName.slice(0, separatorIndex);
+    const safeKey = namespacedName.slice(0, separatorIndex);
     const originalName = namespacedName.slice(separatorIndex + 2);
 
-    const connection = this.connections.get(serverKey);
-    if (!connection) return null;
+    // Find the connection whose sanitized key matches
+    for (const [serverKey, connection] of this.connections) {
+      if (sanitizeServerKey(serverKey) === safeKey) {
+        return { connection, originalName, serverKey };
+      }
+    }
 
-    return { connection, originalName, serverKey };
+    return null;
   }
 }

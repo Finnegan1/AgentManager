@@ -1,5 +1,6 @@
 import type { Prompt } from "@modelcontextprotocol/sdk/types.js";
 import type { DownstreamConnection } from "./downstream-connection.js";
+import { sanitizeServerKey } from "./sanitize.js";
 
 /**
  * Aggregates prompts from all downstream servers with namespace prefixing.
@@ -27,11 +28,12 @@ export class PromptRegistry {
 
     for (const [serverKey, connection] of this.connections) {
       if (connection.status !== "connected") continue;
+      const safeKey = sanitizeServerKey(serverKey);
 
       for (const prompt of connection.capabilities.prompts) {
         prompts.push({
           ...prompt,
-          name: `${serverKey}__${prompt.name}`,
+          name: `${safeKey}__${prompt.name}`,
           description: prompt.description
             ? `[${serverKey}] ${prompt.description}`
             : `[${serverKey}] ${prompt.name}`,
@@ -53,12 +55,16 @@ export class PromptRegistry {
     const separatorIndex = namespacedName.indexOf("__");
     if (separatorIndex === -1) return null;
 
-    const serverKey = namespacedName.slice(0, separatorIndex);
+    const safeKey = namespacedName.slice(0, separatorIndex);
     const originalName = namespacedName.slice(separatorIndex + 2);
 
-    const connection = this.connections.get(serverKey);
-    if (!connection) return null;
+    // Find the connection whose sanitized key matches
+    for (const [serverKey, connection] of this.connections) {
+      if (sanitizeServerKey(serverKey) === safeKey) {
+        return { connection, originalName, serverKey };
+      }
+    }
 
-    return { connection, originalName, serverKey };
+    return null;
   }
 }

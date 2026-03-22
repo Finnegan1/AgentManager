@@ -3,6 +3,7 @@ import type {
   ResourceTemplate,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { DownstreamConnection } from "./downstream-connection.js";
+import { sanitizeServerKey } from "./sanitize.js";
 
 /**
  * Aggregates resources from all downstream servers with namespace prefixing.
@@ -30,11 +31,12 @@ export class ResourceRegistry {
 
     for (const [serverKey, connection] of this.connections) {
       if (connection.status !== "connected") continue;
+      const safeKey = sanitizeServerKey(serverKey);
 
       for (const resource of connection.capabilities.resources) {
         resources.push({
           ...resource,
-          uri: `${serverKey}://${resource.uri}`,
+          uri: `${safeKey}://${resource.uri}`,
           name: resource.name
             ? `[${serverKey}] ${resource.name}`
             : `[${serverKey}] ${resource.uri}`,
@@ -51,11 +53,12 @@ export class ResourceRegistry {
 
     for (const [serverKey, connection] of this.connections) {
       if (connection.status !== "connected") continue;
+      const safeKey = sanitizeServerKey(serverKey);
 
       for (const template of connection.capabilities.resourceTemplates) {
         templates.push({
           ...template,
-          uriTemplate: `${serverKey}://${template.uriTemplate}`,
+          uriTemplate: `${safeKey}://${template.uriTemplate}`,
           name: template.name
             ? `[${serverKey}] ${template.name}`
             : `[${serverKey}] ${template.uriTemplate}`,
@@ -78,12 +81,16 @@ export class ResourceRegistry {
     const protocolEnd = namespacedUri.indexOf("://");
     if (protocolEnd === -1) return null;
 
-    const serverKey = namespacedUri.slice(0, protocolEnd);
+    const safeKey = namespacedUri.slice(0, protocolEnd);
     const originalUri = namespacedUri.slice(protocolEnd + 3);
 
-    const connection = this.connections.get(serverKey);
-    if (!connection) return null;
+    // Find the connection whose sanitized key matches
+    for (const [serverKey, connection] of this.connections) {
+      if (sanitizeServerKey(serverKey) === safeKey) {
+        return { connection, originalUri, serverKey };
+      }
+    }
 
-    return { connection, originalUri, serverKey };
+    return null;
   }
 }
