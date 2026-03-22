@@ -1,159 +1,103 @@
-# Turborepo starter
+# Skill Gateway
 
-This Turborepo starter is maintained by the Turborepo core team.
+A unified MCP (Model Context Protocol) gateway and skill management system. Manage reusable AI knowledge as markdown files, proxy multiple MCP servers through a single endpoint, and configure everything from a native desktop app.
 
-## Using this example
+## What's Inside
 
-Run the following command:
+This is a **Turborepo** monorepo using **Bun** as the package manager.
+
+### Apps
+
+- **`skill-mcp`** — MCP gateway server that serves skills and proxies downstream MCP servers. Supports stdio, SSE, and HTTP streaming transports.
+- **`skill-manager`** — Native desktop app (Tauri + React) for managing skills, servers, and monitoring gateway status.
+- **`docs`** — Documentation site built with TanStack Start and Fumadocs.
+
+### Packages
+
+- **`shared-types`** — Shared TypeScript types (skills, config, server definitions)
+- **`ui`** — Shared React component library
+- **`eslint-config`** — Shared ESLint configurations
+- **`typescript-config`** — Shared `tsconfig.json` presets
+
+## Getting Started
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) >= 1.3.11
+- [Node.js](https://nodejs.org/) >= 18
+- [Rust](https://www.rust-lang.org/) (for the Tauri desktop app)
+
+### Install
 
 ```sh
-npx create-turbo@latest
+bun install
 ```
 
-## What's inside?
+### Development
 
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Run all apps in dev mode:
 
 ```sh
-cd my-turborepo
-turbo build
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
 turbo dev
 ```
 
-Without global `turbo`, use your package manager:
+Or run a specific app:
 
 ```sh
-cd my-turborepo
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+turbo dev --filter=skill-mcp
+turbo dev --filter=skill-manager
+turbo dev --filter=docs
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+### Build
 
 ```sh
-turbo dev --filter=web
+turbo build
 ```
 
-Without global `turbo`:
+### Lint & Format
 
 ```sh
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+turbo lint
+turbo check-types
+bun run format
 ```
 
-### Remote Caching
+## Architecture
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+```
+AI Client (e.g. Claude Code)
+    ↓ MCP protocol (stdio)
+MCP Gateway Server (skill-mcp)
+    ├─ Reads ~/.skill-management/config.json (hot-reload)
+    ├─ Reads ~/.skill-management/skills/*.md
+    ├─ Writes ~/.skill-management/status.json
+    └─ Proxies downstream MCP servers
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
+Desktop App (skill-manager)
+    ├─ Reads config, skills, and status files
+    ├─ Writes config and skill files via Tauri
+    └─ UI for managing everything
 ```
 
-Without global `turbo`, use your package manager:
+Communication between the gateway and the desktop app is file-based — no direct process coupling.
 
-```sh
-cd my-turborepo
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
+## Key Features
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+- **Skills as Markdown** — YAML frontmatter for metadata, plain markdown for content
+- **MCP Gateway** — Proxy tools, resources, and prompts from multiple downstream servers with automatic namespacing
+- **Hot-Reload Config** — Changes to `~/.skill-management/config.json` are picked up without restarting the gateway
+- **Native Desktop App** — Dashboard, server management, skill editor with CodeMirror and Vim keybindings
+- **Full Documentation** — Searchable docs site covering concepts, architecture, and configuration
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+## Tech Stack
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+| Layer | Technology |
+|---|---|
+| Package Manager | Bun |
+| Monorepo | Turborepo |
+| Language | TypeScript |
+| MCP SDK | @modelcontextprotocol/sdk |
+| Frontend | React 19, Tailwind CSS, shadcn/ui |
+| Desktop | Tauri 2 (Rust) |
+| Docs | TanStack Start, Fumadocs |
