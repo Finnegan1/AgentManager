@@ -26,9 +26,12 @@ const TransportConfigSchema = z.discriminatedUnion("type", [
   StreamableHttpTransportSchema,
 ]);
 
+const ServerScopeSchema = z.enum(["global", "project"]);
+
 const DownstreamServerConfigSchema = z.object({
   name: z.string().min(1),
   enabled: z.boolean(),
+  scope: ServerScopeSchema.optional(),
   transport: TransportConfigSchema,
 });
 
@@ -36,6 +39,7 @@ export const SkillManagementConfigSchema = z.object({
   version: z.literal("1.0"),
   gateway: z.object({
     autoStart: z.boolean(),
+    port: z.number().int().min(1).max(65535).optional(),
   }),
   servers: z.record(z.string(), DownstreamServerConfigSchema),
   skills: z.object({

@@ -73,9 +73,20 @@ When a downstream server connects, the gateway discovers its capabilities by cal
 
 These are cached in the registries. If a downstream server disconnects, its capabilities are removed from the registries.
 
+## Global and Project Proxy Merging
+
+Each client session may have access to tools from two sources:
+
+1. **Global ProxyManager** — Tools from `scope: "global"` downstream servers (shared across all sessions)
+2. **Project ProxyManager** — Tools from `scope: "project"` downstream servers (specific to the session's project root)
+
+When listing tools, the gateway merges both sets. When resolving a tool call, **project-scoped tools take priority** — if the same tool name exists in both global and project scope, the project version is used.
+
+The same priority applies to resources and prompts.
+
 ## List Changed Notifications
 
-Whenever the set of available capabilities changes (server connects, disconnects, or config changes), the gateway sends a **listChanged** notification to the AI client. This tells the client to re-fetch the list of available tools, resources, or prompts.
+Whenever the set of available capabilities changes (server connects, disconnects, or config changes), the gateway broadcasts a **listChanged** notification to **all connected sessions**. This tells each client to re-fetch the list of available tools, resources, or prompts.
 
 ## Only Connected Servers
 

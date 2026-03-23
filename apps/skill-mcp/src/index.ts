@@ -1,14 +1,3 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  ListToolsRequestSchema,
-  CallToolRequestSchema,
-  ListResourcesRequestSchema,
-  ListResourceTemplatesRequestSchema,
-  ReadResourceRequestSchema,
-  ListPromptsRequestSchema,
-  GetPromptRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
@@ -16,130 +5,47 @@ import * as os from "node:os";
 import { ConfigStore } from "./config/config-store.js";
 import { SkillManager } from "./skills/skill-manager.js";
 import { ProxyManager } from "./gateway/proxy-manager.js";
-import { SKILL_TOOLS, handleSkillToolCall } from "./tools/skill-tools.js";
-import { GATEWAY_TOOLS, handleGatewayToolCall } from "./tools/gateway-tools.js";
+import { SessionManager } from "./server/session-manager.js";
+import { ProjectConnectionPool } from "./server/project-connection-pool.js";
+import { createHttpServer } from "./server/http-server.js";
 import type { GatewayStatus } from "@repo/shared-types";
 
 const STATUS_PATH = path.join(os.homedir(), ".skill-management", "status.json");
+const DEFAULT_PORT = 24842;
+const DEFAULT_HOST = "127.0.0.1";
 
-// --- Initialize core components ---
+// --- Parse CLI arguments ---
+
+const args = process.argv.slice(2);
+const portArgIndex = args.indexOf("--port");
+const port =
+  portArgIndex !== -1 && args[portArgIndex + 1]
+    ? parseInt(args[portArgIndex + 1]!, 10)
+    : DEFAULT_PORT;
+
+// --- Initialize shared core components ---
 
 const configStore = new ConfigStore();
 const skillManager = new SkillManager(configStore.config.skills.directory);
-const proxyManager = new ProxyManager(configStore);
 
 // Update skill manager when config changes
 configStore.on("changed", (newConfig) => {
   skillManager.setDirectory(newConfig.skills.directory);
 });
 
-// --- Create the low-level MCP Server ---
-
-const server = new Server(
-  { name: "skill-gateway", version: "0.1.0" },
-  {
-    capabilities: {
-      tools: { listChanged: true },
-      resources: { listChanged: true },
-      prompts: { listChanged: true },
-    },
-  },
-);
-
-// Give proxy manager a reference to the server for notifications
-proxyManager.setServer(server);
-
-// Set native tools on the tool registry
-proxyManager.toolRegistry.setNativeTools([...SKILL_TOOLS, ...GATEWAY_TOOLS]);
-
-// --- Register MCP Request Handlers ---
-
-// Tools: List
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  const tools = proxyManager.toolRegistry.listTools();
-  return { tools };
-});
-
-// Tools: Call
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-  const toolArgs = (args ?? {}) as Record<string, unknown>;
-
-  // Check if it's a native skill tool
-  if (name.startsWith("skills__")) {
-    return handleSkillToolCall(name, toolArgs, skillManager);
-  }
-
-  // Check if it's a gateway meta-tool
-  if (name.startsWith("gateway__")) {
-    return handleGatewayToolCall(name, toolArgs, proxyManager);
-  }
-
-  // Try to resolve as a proxied tool
-  const resolved = proxyManager.toolRegistry.resolveToolCall(name);
-  if (!resolved) {
-    return {
-      content: [{ type: "text" as const, text: `Unknown tool: ${name}` }],
-      isError: true,
-    };
-  }
-
-  return await resolved.connection.callTool(resolved.originalName, toolArgs);
-});
-
-// Resources: List
-server.setRequestHandler(ListResourcesRequestSchema, async () => {
-  const resources = proxyManager.resourceRegistry.listResources();
-  return { resources };
-});
-
-// Resources: List Templates
-server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => {
-  const resourceTemplates =
-    proxyManager.resourceRegistry.listResourceTemplates();
-  return { resourceTemplates };
-});
-
-// Resources: Read
-server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-  const { uri } = request.params;
-
-  const resolved = proxyManager.resourceRegistry.resolveResourceRead(uri);
-  if (!resolved) {
-    throw new Error(`Unknown resource URI: ${uri}`);
-  }
-
-  return await resolved.connection.readResource(resolved.originalUri);
-});
-
-// Prompts: List
-server.setRequestHandler(ListPromptsRequestSchema, async () => {
-  const prompts = proxyManager.promptRegistry.listPrompts();
-  return { prompts };
-});
-
-// Prompts: Get
-server.setRequestHandler(GetPromptRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-
-  const resolved = proxyManager.promptRegistry.resolvePromptGet(name);
-  if (!resolved) {
-    throw new Error(`Unknown prompt: ${name}`);
-  }
-
-  return await resolved.connection.getPrompt(
-    resolved.originalName,
-    args as Record<string, string> | undefined,
-  );
-});
-
 // --- Status file management ---
+
+let globalProxy: ProxyManager | undefined;
+let sessionManager: SessionManager | undefined;
 
 function writeStatusFile(): void {
   const status: GatewayStatus = {
     pid: process.pid,
     startedAt: new Date().toISOString(),
-    servers: proxyManager.getConnectionStatuses(),
+    port,
+    url: `http://${DEFAULT_HOST}:${port}/mcp`,
+    activeSessions: sessionManager?.sessionCount ?? 0,
+    servers: globalProxy?.getConnectionStatuses() ?? {},
   };
 
   try {
@@ -168,36 +74,77 @@ function removeStatusFile(): void {
 // --- Main startup ---
 
 async function main() {
-  // Initialize proxy connections from config
-  await proxyManager.initialize();
+  const hostname = DEFAULT_HOST;
+  const url = `http://${hostname}:${port}/mcp`;
+
+  // Create global proxy (only manages global-scope servers)
+  globalProxy = new ProxyManager(configStore, { scopeFilter: "global" });
+
+  // Create project connection pool
+  const projectPool = new ProjectConnectionPool(configStore);
+
+  // Create session manager
+  sessionManager = new SessionManager(globalProxy, skillManager, projectPool);
+
+  // Wire up the global proxy to broadcast via session manager
+  globalProxy.setBroadcaster(sessionManager);
+
+  // Initialize global proxy (connects to global-scope servers)
+  await globalProxy.initialize();
 
   // Start watching config for changes
   configStore.startWatching();
 
-  // Write initial status
+  // Create HTTP server
+  const httpServer = createHttpServer({
+    port,
+    hostname,
+    sessionManager,
+    onSessionInitialized: async (sessionId: string) => {
+      // After initialize, try to query the client for its project root
+      // via the MCP roots/list protocol
+      // For now, we rely on the X-Project-Root header as primary mechanism
+      // TODO: Implement roots/list request once SDK exposes server-to-client requests
+      console.log(
+        `[HTTP] Session ${sessionId} initialized, waiting for project root header`,
+      );
+    },
+  });
+
+  // Start the HTTP server
+  await new Promise<void>((resolve, reject) => {
+    httpServer.on("error", reject);
+    httpServer.listen(port, hostname, () => {
+      resolve();
+    });
+  });
+
+  // Start session cleanup timer
+  sessionManager.startCleanupTimer();
+
+  // Write initial status and periodically update
   writeStatusFile();
-
-  // Periodically update status file
   const statusInterval = setInterval(writeStatusFile, 5000);
-
-  // Connect MCP server to stdio transport
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
 
   // Graceful shutdown
   const shutdown = async () => {
     clearInterval(statusInterval);
     configStore.stopWatching();
-    await proxyManager.shutdown();
+    await sessionManager!.shutdown();
+    await projectPool.shutdown();
+    await globalProxy!.shutdown();
+    httpServer.close();
     removeStatusFile();
-    await server.close();
     process.exit(0);
   };
 
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 
-  console.error("Skill Gateway MCP server started");
+  console.error(`Skill Gateway MCP server started`);
+  console.error(`  URL: ${url}`);
+  console.error(`  Port: ${port}`);
+  console.error(`  Host: ${hostname}`);
 }
 
 main().catch((err) => {

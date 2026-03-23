@@ -1,15 +1,35 @@
-import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import type { SkillManagementConfig, DownstreamServerConfig } from "@repo/shared-types";
+import type { SkillManagementConfig, DownstreamServerConfig, ServerScope } from "@repo/shared-types";
 import { DownstreamConnection } from "./downstream-connection.js";
 import { ToolRegistry } from "./tool-registry.js";
 import { ResourceRegistry } from "./resource-registry.js";
 import { PromptRegistry } from "./prompt-registry.js";
 import type { ConfigStore } from "../config/config-store.js";
 
+/** Options for controlling which servers the ProxyManager manages */
+export interface ProxyManagerOptions {
+  /** Filter servers by scope: "global" or "project" */
+  scopeFilter: ServerScope;
+  /**
+   * Project root path for project-scoped ProxyManagers.
+   * When set, downstream stdio connections use this as their cwd.
+   */
+  projectRoot?: string;
+}
+
+/** Interface for broadcasting notifications to all connected sessions */
+export interface NotificationBroadcaster {
+  broadcastToolListChanged(): void;
+  broadcastResourceListChanged(): void;
+  broadcastPromptListChanged(): void;
+}
+
 /**
- * Orchestrates all downstream MCP server connections.
+ * Orchestrates downstream MCP server connections.
  * Manages the lifecycle of connections and updates registries
  * when config changes or servers connect/disconnect.
+ *
+ * Each ProxyManager instance manages either global-scope or
+ * project-scope servers, determined by the scopeFilter option.
  */
 export class ProxyManager {
   readonly toolRegistry = new ToolRegistry();
@@ -17,13 +37,27 @@ export class ProxyManager {
   readonly promptRegistry = new PromptRegistry();
 
   private connections = new Map<string, DownstreamConnection>();
-  private server: Server | null = null;
+  private broadcaster: NotificationBroadcaster | null = null;
+  private scopeFilter: ServerScope;
+  private projectRoot: string | undefined;
 
-  constructor(private configStore: ConfigStore) {}
+  constructor(
+    private configStore: ConfigStore,
+    options: ProxyManagerOptions,
+  ) {
+    this.scopeFilter = options.scopeFilter;
+    this.projectRoot = options.projectRoot;
+  }
 
-  /** Set the gateway server instance (for sending notifications) */
-  setServer(server: Server): void {
-    this.server = server;
+  /** Set the broadcaster for sending notifications to all connected sessions */
+  setBroadcaster(broadcaster: NotificationBroadcaster): void {
+    this.broadcaster = broadcaster;
+  }
+
+  /** Check if a server config matches this manager's scope filter */
+  private matchesScope(config: DownstreamServerConfig): boolean {
+    const serverScope = config.scope ?? "global";
+    return serverScope === this.scopeFilter;
   }
 
   /** Initialize connections based on current config */
@@ -31,7 +65,7 @@ export class ProxyManager {
     const config = this.configStore.config;
 
     for (const [serverKey, serverConfig] of Object.entries(config.servers)) {
-      if (serverConfig.enabled) {
+      if (serverConfig.enabled && this.matchesScope(serverConfig)) {
         await this.addConnection(serverKey, serverConfig);
       }
     }
@@ -93,7 +127,19 @@ export class ProxyManager {
     serverKey: string,
     config: DownstreamServerConfig,
   ): Promise<void> {
-    const connection = new DownstreamConnection(serverKey, config);
+    // For project-scoped managers, override cwd on stdio transports
+    let effectiveConfig = config;
+    if (this.projectRoot && config.transport.type === "stdio") {
+      effectiveConfig = {
+        ...config,
+        transport: {
+          ...config.transport,
+          cwd: this.projectRoot,
+        },
+      };
+    }
+
+    const connection = new DownstreamConnection(serverKey, effectiveConfig);
 
     connection.setStatusChangeHandler((_key, status) => {
       if (status === "connected") {
@@ -102,8 +148,6 @@ export class ProxyManager {
         this.promptRegistry.registerConnection(serverKey, connection);
         this.notifyListChanged();
       } else if (status === "disconnected" || status === "error") {
-        // Registries still hold the reference, but capabilities are empty
-        // when disconnected, so listTools/etc. will skip this server
         this.notifyListChanged();
       }
     });
@@ -144,11 +188,13 @@ export class ProxyManager {
     const oldKeys = new Set(Object.keys(oldConfig.servers));
     const newKeys = new Set(Object.keys(newConfig.servers));
 
-    // Remove servers that were deleted or disabled
+    // Remove servers that were deleted, disabled, or no longer match scope
     for (const key of oldKeys) {
       const newServer = newConfig.servers[key];
-      if (!newServer || !newServer.enabled) {
-        await this.removeConnection(key);
+      if (!newServer || !newServer.enabled || !this.matchesScope(newServer)) {
+        if (this.connections.has(key)) {
+          await this.removeConnection(key);
+        }
       }
     }
 
@@ -157,26 +203,23 @@ export class ProxyManager {
       const newServer = newConfig.servers[key]!;
       const oldServer = oldConfig.servers[key];
 
-      if (!newServer.enabled) continue;
+      if (!newServer.enabled || !this.matchesScope(newServer)) continue;
 
-      if (!oldServer || !oldKeys.has(key)) {
-        // New server
+      if (!oldServer || !oldKeys.has(key) || !this.matchesScope(oldServer)) {
         await this.addConnection(key, newServer);
       } else if (JSON.stringify(newServer) !== JSON.stringify(oldServer)) {
-        // Server config changed - reconnect
         await this.removeConnection(key);
         await this.addConnection(key, newServer);
       }
     }
   }
 
-  /** Send list-changed notifications to the connected MCP client */
+  /** Broadcast list-changed notifications to all connected sessions */
   private notifyListChanged(): void {
-    if (!this.server) return;
+    if (!this.broadcaster) return;
 
-    // Fire and forget - these are notifications
-    this.server.sendToolListChanged().catch(() => {});
-    this.server.sendResourceListChanged().catch(() => {});
-    this.server.sendPromptListChanged().catch(() => {});
+    this.broadcaster.broadcastToolListChanged();
+    this.broadcaster.broadcastResourceListChanged();
+    this.broadcaster.broadcastPromptListChanged();
   }
 }

@@ -9,7 +9,7 @@ The **Dashboard** is the landing page of the Skill Manager app. It gives you a q
 
 At the top of the dashboard, a status card shows whether the MCP gateway is currently running:
 
-- **Running** (green badge) — The gateway process is active, with its PID and start time displayed
+- **Running** (green badge) — The gateway HTTP daemon is active, with its PID, start time, port, URL, and active session count displayed
 - **Stopped** (red badge) — No gateway process detected
 
 The app determines this by reading `~/.skill-management/status.json` and verifying the reported PID is still a running process.

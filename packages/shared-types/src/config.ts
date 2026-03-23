@@ -8,6 +8,8 @@ export interface SkillManagementConfig {
   gateway: {
     /** Whether the gateway auto-starts when the desktop app launches */
     autoStart: boolean;
+    /** Port for the HTTP daemon. Defaults to 24842 */
+    port?: number;
   };
   /** Map of server key -> downstream server configuration */
   servers: Record<string, DownstreamServerConfig>;
@@ -24,6 +26,12 @@ export interface GatewayStatus {
   pid: number;
   /** ISO timestamp of when the gateway started */
   startedAt: string;
+  /** Port the HTTP server is listening on */
+  port: number;
+  /** URL for MCP clients to connect to */
+  url: string;
+  /** Number of active client sessions */
+  activeSessions: number;
   /** Status of each downstream server connection */
   servers: Record<
     string,

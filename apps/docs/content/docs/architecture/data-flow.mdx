@@ -1,9 +1,74 @@
 ---
 title: Data Flow
-description: How data flows through the system — skill writes, config changes, tool proxying, and status polling.
+description: How data flows through the system — HTTP requests, sessions, skill writes, config changes, tool proxying, and status polling.
 ---
 
 Understanding the data flows in Skill Gateway helps you reason about how changes propagate through the system.
+
+## HTTP Request Flow
+
+When an AI client connects to the gateway:
+
+```
+AI Client sends POST http://127.0.0.1:24842/mcp
+    │
+    ▼
+HTTP Server receives request
+    │
+    ├── Has mcp-session-id header with known session?
+    │   YES → Route to existing session's transport
+    │   NO  → Create new session (see Session Lifecycle below)
+    │
+    ▼
+StreamableHTTPServerTransport.handleRequest(req, res)
+    │
+    ▼
+Session's Server processes the MCP request
+    │
+    ▼
+Response sent back to AI client
+```
+
+## Session Lifecycle
+
+When a new AI client connects for the first time:
+
+```
+POST /mcp (no session ID, contains "initialize" request)
+    │
+    ▼
+SessionManager.createSession()
+    │  Creates new Server + StreamableHTTPServerTransport pair
+    │  Registers request handlers (tools, resources, prompts)
+    │
+    ▼
+Transport handles the initialize handshake
+    │  Session ID assigned (UUID)
+    │  Client receives mcp-session-id header
+    │
+    ▼
+onSessionInitialized callback fires
+    │
+    ▼
+Gateway queries client for project root
+    │  (via roots/list or X-Project-Root header)
+    │
+    ▼
+SessionManager.attachProjectRoot(sessionId, root)
+    │  Acquires project ProxyManager from ProjectConnectionPool
+    │  Re-registers handlers to include project-scoped tools
+    │  Sends listChanged notification to client
+    │
+    ▼
+Client now has access to:
+    ├── Native tools (skills, gateway)
+    ├── Global-scope downstream tools
+    └── Project-scope downstream tools (for their project root)
+```
+
+Sessions are cleaned up:
+- When the client disconnects (transport `onclose`)
+- After 30 minutes of inactivity (periodic cleanup every 60 seconds)
 
 ## Skill Write Flow
 
@@ -53,7 +118,7 @@ ConfigStore validates new config (Zod schema)
 ConfigStore emits "changed" event
     │
     ▼
-ProxyManager diffs old ↔ new config
+Global ProxyManager diffs old ↔ new config (global-scope servers)
     │
     ├── New servers → create DownstreamConnection, connect
     ├── Removed servers → disconnect, clean up
@@ -61,10 +126,14 @@ ProxyManager diffs old ↔ new config
     └── Disabled servers → disconnect, remove from registries
     │
     ▼
+Each project ProxyManager also receives the change event
+    │  (handles project-scope server changes independently)
+    │
+    ▼
 Registries updated (tools, resources, prompts)
     │
     ▼
-MCP "listChanged" notification sent to AI client
+SessionManager broadcasts "listChanged" to ALL connected sessions
 ```
 
 <Callout>
@@ -79,7 +148,13 @@ When an AI client calls a proxied tool through the gateway:
 AI Client calls tool "db__run_query" with args
     │
     ▼
-Gateway receives CallToolRequest
+Session's Server receives CallToolRequest
+    │
+    ▼
+Check project proxy first (project-scoped tools take priority)
+    │
+    ├── Found in project proxy? → forward to project downstream
+    └── Not found? → check global proxy
     │
     ▼
 ToolRegistry.resolveToolCall("db__run_query")
@@ -97,14 +172,14 @@ Downstream MCP server "db" executes the tool
 Result flows back through the gateway to the AI client
 ```
 
-The same pattern applies to resource reads and prompt requests — the gateway resolves the namespace, finds the correct downstream connection, and forwards the request.
+The same pattern applies to resource reads and prompt requests — the gateway resolves the namespace, finds the correct downstream connection, and forwards the request. Project-scoped servers take priority over global servers when resolving names.
 
 ## Gateway Status Polling
 
 The desktop app monitors the gateway's status through a shared file:
 
 ```
-MCP Gateway (running as separate process)
+MCP Gateway HTTP Daemon (running on port 24842)
     │
     │  Every 5 seconds:
     ▼
@@ -112,6 +187,9 @@ Writes ~/.skill-management/status.json
     │  {
     │    "pid": 12345,
     │    "startedAt": "2026-03-22T10:00:00Z",
+    │    "port": 24842,
+    │    "url": "http://127.0.0.1:24842/mcp",
+    │    "activeSessions": 3,
     │    "servers": {
     │      "db": { "connected": true, "toolCount": 5, ... },
     │      "ai": { "connected": false, "error": "timeout", ... }
@@ -153,7 +231,7 @@ ProxyManager creates DownstreamConnection
     │
     ▼
 Connection creates appropriate transport:
-    ├── stdio: spawn child process
+    ├── stdio: spawn child process (cwd overridden for project-scope)
     ├── SSE: HTTP connection with EventSource
     └── streamable-http: HTTP connection
     │
@@ -170,7 +248,7 @@ Capability discovery:
 Connection marked as "connected"
     │
     ▼
-Gateway sends "listChanged" notification to AI client
+SessionManager broadcasts "listChanged" to all connected sessions
 ```
 
 If the connection fails, exponential backoff retry kicks in — up to 10 attempts with a maximum 30-second delay between retries.

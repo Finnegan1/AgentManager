@@ -111,6 +111,10 @@ Gets detailed status information for a specific downstream server.
 
 | Name | Type | Description |
 |---|---|---|
-| `serverKey` | `string` | The server key to query |
+| `server_key` | `string` | The server key to query |
 
 **Returns:** Detailed status including connection state, capability counts, and any error information.
+
+<Callout>
+  The `gateway__list_servers` and `gateway__server_status` tools report on **global-scope** downstream servers. Project-scoped server status is managed per session and per project root.
+</Callout>

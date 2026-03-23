@@ -1,50 +1,102 @@
 ---
 title: MCP Gateway
-description: How the gateway proxies multiple MCP servers through a single unified endpoint.
+description: How the gateway proxies multiple MCP servers through a single unified HTTP endpoint.
 ---
 
-The **MCP gateway** is the heart of Skill Gateway. It's a Model Context Protocol server that aggregates multiple downstream MCP servers and your local skill library into a single connection point.
+The **MCP gateway** is the heart of Skill Gateway. It's a centralized HTTP daemon that aggregates multiple downstream MCP servers and your local skill library into a single connection point for your AI clients.
 
 ## The Problem It Solves
 
 Without a gateway, your AI client needs a separate connection for each MCP server you want to use. Managing 5, 10, or more individual server connections becomes unwieldy — each with its own configuration, lifecycle, and potential for naming conflicts.
 
-The gateway solves this by acting as a **single MCP server** that your client connects to. Behind the scenes, it connects to all your downstream servers and proxies their capabilities transparently.
+The gateway solves this by acting as a **single HTTP endpoint** that your clients connect to. Behind the scenes, it connects to all your downstream servers and proxies their capabilities transparently.
 
 ## How It Works
 
 ```
-AI Client (e.g. Claude)
-    │
-    ▼
-┌─────────────────────────────┐
-│       Skill Gateway         │
-│  (MCP Server on stdio)      │
-│                             │
-│  ┌─────────────────────┐    │
-│  │   Native Tools      │    │
-│  │  • skills__list     │    │
-│  │  • skills__search   │    │
-│  │  • skills__get      │    │
-│  │  • gateway__list    │    │
-│  │  • gateway__status  │    │
-│  └─────────────────────┘    │
-│                             │
-│  ┌─────────────────────┐    │
-│  │   Proxy Manager     │    │
-│  │  ┌───────────────┐  │    │
-│  │  │ Tool Registry  │  │    │
-│  │  │ Resource Reg.  │  │    │
-│  │  │ Prompt Reg.    │  │    │
-│  │  └───────────────┘  │    │
-│  └─────────────────────┘    │
-└────────┬──────┬──────┬──────┘
-         │      │      │
-    ┌────▼─┐ ┌─▼───┐ ┌▼─────┐
-    │ MCP  │ │ MCP │ │ MCP  │
-    │Srv A │ │Srv B│ │Srv C │
-    └──────┘ └─────┘ └──────┘
+AI Client A (e.g. Claude in /project-a)  ──HTTP──┐
+AI Client B (e.g. Claude in /project-b)  ──HTTP──┤
+AI Client C (e.g. Claude in /project-a)  ──HTTP──┘
+                                                   │
+                                                   ▼
+┌──────────────────────────────────────────────────────────┐
+│             Skill Gateway HTTP Daemon                     │
+│             http://127.0.0.1:24842/mcp                    │
+│                                                          │
+│  ┌──────────────────────────────────────────────────┐    │
+│  │  Session Manager                                  │    │
+│  │  Each client gets its own Server + Transport pair │    │
+│  └──────────────────────────────────────────────────┘    │
+│                                                          │
+│  ┌─────────────────────┐  ┌──────────────────────────┐   │
+│  │   Native Tools      │  │   Global Proxy Manager   │   │
+│  │  • skills__list     │  │   (shared across all     │   │
+│  │  • skills__search   │  │    sessions)             │   │
+│  │  • skills__get      │  │   scope: "global"        │   │
+│  │  • gateway__list    │  └──────────────────────────┘   │
+│  │  • gateway__status  │                                 │
+│  └─────────────────────┘  ┌──────────────────────────┐   │
+│                           │  Project Connection Pool  │   │
+│                           │  scope: "project"         │   │
+│                           │  per-project-root pools   │   │
+│                           └──────────────────────────┘   │
+└────────┬──────────────────────────┬──────────────────────┘
+         │                          │
+    GLOBAL servers:            PROJECT servers:
+    ┌────────┐                 /project-a:
+    │ DB API │                   ┌──────────┐
+    │ Search │                   │ Linter   │
+    └────────┘                   │ Git MCP  │
+                                 └──────────┘
+                               /project-b:
+                                 ┌──────────┐
+                                 │ Linter   │
+                                 │ Git MCP  │
+                                 └──────────┘
 ```
+
+## Multi-Session Architecture
+
+The gateway runs as a single process, but each connected AI client gets its own isolated **session**. This is because the MCP SDK's `Server` class supports exactly one transport — so each client connection creates a new `Server` + `StreamableHTTPServerTransport` pair.
+
+Sessions are identified by the `mcp-session-id` HTTP header, which is assigned during the MCP `initialize` handshake.
+
+### Session Lifecycle
+
+1. **Client sends POST /mcp** — The gateway creates a new `Server` + `Transport` pair
+2. **Initialize handshake** — The MCP protocol's `initialize` request completes, and a session ID is assigned
+3. **Project root detection** — The gateway queries the client's project root (via `roots/list` or `X-Project-Root` header)
+4. **Project attachment** — If a project root is found, project-scoped downstream connections are attached to the session
+5. **Normal operation** — The client uses tools, resources, and prompts via the session
+6. **Cleanup** — Sessions are removed on disconnect or after 30 minutes of inactivity
+
+## Server Scoping
+
+Downstream servers have a **scope** that determines how they are managed:
+
+- **`"global"`** (default) — Started once and shared across all sessions. Use for APIs, databases, web services, and other context-independent servers.
+- **`"project"`** — Started per project root with the project's working directory as `cwd`. Sessions sharing the same project root share these connections. Use for filesystem tools, linters, Git servers, and other context-dependent tools.
+
+See [Downstream Servers — Scoping](/docs/concepts/downstream-servers#scoping) for more details.
+
+## Connecting Your AI Client
+
+Configure your AI client to connect to the gateway's HTTP endpoint. For Claude Code, add to `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "skill-gateway": {
+      "type": "http",
+      "url": "http://127.0.0.1:24842/mcp"
+    }
+  }
+}
+```
+
+<Callout>
+  The gateway must be running before your AI client connects. Start it with `bun run dev:server` in the `apps/skill-mcp/` directory.
+</Callout>
 
 ## Namespacing
 
@@ -79,10 +131,19 @@ The gateway watches the configuration file (`~/.skill-management/config.json`) f
 3. The `ProxyManager` diffs the old and new configurations
 4. New servers are connected, removed servers are disconnected, changed servers are reconnected
 5. The tool/resource/prompt registries are updated
-6. A `listChanged` notification is sent to the connected AI client
+6. A `listChanged` notification is broadcast to **all connected sessions**
 
 This means you never need to restart the gateway to apply configuration changes.
 
 ## Auto-Reconnect
 
 If a downstream server connection drops, the gateway automatically attempts to reconnect with exponential backoff — up to 10 retries with a maximum delay of 30 seconds between attempts.
+
+## HTTP Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/mcp` | POST | MCP requests (initialize, tool calls, etc.) |
+| `/mcp` | GET | SSE stream for server-to-client notifications |
+| `/mcp` | DELETE | Close a session |
+| `/health` | GET | Health check with PID, uptime, and session count |

@@ -3,18 +3,38 @@ title: MCP Server
 description: The MCP gateway server — how it runs, what it exposes, and how it proxies downstream servers.
 ---
 
-The **MCP gateway server** is the core runtime component of Skill Gateway. It's a Node.js/Bun process that implements the [Model Context Protocol](https://modelcontextprotocol.io/) and acts as a unified entry point for your AI client.
+The **MCP gateway server** is the core runtime component of Skill Gateway. It's a Node.js/Bun HTTP daemon that implements the [Model Context Protocol](https://modelcontextprotocol.io/) and acts as a unified entry point for your AI clients.
 
 ## Running the Server
 
-The gateway runs as a stdio-based MCP server. Your AI client launches it directly:
+The gateway runs as an HTTP daemon on `127.0.0.1:24842`. Start it in development mode:
+
+```bash
+cd apps/skill-mcp
+bun run dev:server
+```
+
+Or for production (after building with `bun run build`):
+
+```bash
+cd apps/skill-mcp
+bun run start
+```
+
+You can specify a custom port with the `--port` flag:
+
+```bash
+bun run dev:server -- --port 3000
+```
+
+Then configure your AI client to connect. For Claude Code, add to `.mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "skill-gateway": {
-      "command": "bun",
-      "args": ["/path/to/skill-management/apps/skill-mcp/src/index.ts"]
+      "type": "http",
+      "url": "http://127.0.0.1:24842/mcp"
     }
   }
 }
@@ -24,17 +44,19 @@ When started, the gateway:
 
 1. Loads the configuration from `~/.skill-management/config.json`
 2. Starts watching the config file for changes
-3. Connects to all enabled downstream servers
-4. Discovers their capabilities (tools, resources, prompts)
-5. Begins writing status to `~/.skill-management/status.json` every 5 seconds
-6. Starts accepting MCP requests on stdio
+3. Initializes the global ProxyManager (connects to `scope: "global"` downstream servers)
+4. Creates the ProjectConnectionPool for managing `scope: "project"` servers
+5. Creates the SessionManager for handling multiple client sessions
+6. Starts the HTTP server on the configured port
+7. Begins writing status to `~/.skill-management/status.json` every 5 seconds
+8. Starts accepting MCP requests from AI clients via HTTP
 
 ## What It Exposes
 
-The gateway exposes a unified set of capabilities to the AI client:
+The gateway exposes a unified set of capabilities to each connected AI client:
 
 - **Native tools** — Built-in tools for skill management and gateway introspection
-- **Proxied tools** — All tools from connected downstream servers, namespaced with the server key
+- **Proxied tools** — All tools from connected downstream servers, namespaced with the server key. Includes both global and project-scoped tools.
 - **Proxied resources** — All resources from downstream servers, with namespaced URIs
 - **Proxied prompts** — All prompts from downstream servers, namespaced
 
@@ -54,10 +76,12 @@ The gateway exposes a unified set of capabilities to the AI client:
 
 | Component | Responsibility |
 |---|---|
+| **HTTP Server** | Routes incoming HTTP requests to the correct session transport |
+| **SessionManager** | Creates per-client `Server` + `Transport` pairs, manages session lifecycle, broadcasts notifications |
+| **Global ProxyManager** | Orchestrates downstream connections for `scope: "global"` servers, shared across all sessions |
+| **ProjectConnectionPool** | Manages per-project-root ProxyManagers for `scope: "project"` servers with reference counting |
 | **ConfigStore** | Watches and validates `config.json`, emits change events |
 | **SkillManager** | Reads and searches skill files from disk |
-| **ProxyManager** | Orchestrates downstream connections and registries |
-| **DownstreamConnection** | Manages a single downstream MCP server connection |
 | **ToolRegistry** | Aggregates and namespaces tools from all sources |
 | **ResourceRegistry** | Aggregates and namespaces resources |
 | **PromptRegistry** | Aggregates and namespaces prompts |
@@ -66,6 +90,8 @@ The gateway exposes a unified set of capabilities to the AI client:
 
 The gateway handles `SIGINT` and `SIGTERM` signals gracefully:
 
-1. All downstream connections are closed
-2. The status file is cleaned up
-3. The process exits cleanly
+1. All client sessions are closed
+2. All project connection pools are shut down
+3. All global downstream connections are closed
+4. The status file is cleaned up
+5. The process exits cleanly

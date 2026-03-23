@@ -39,13 +39,14 @@ The frontend lives in `src/` and the Rust backend in `src-tauri/`.
 
 ### `apps/skill-mcp/`
 
-The MCP gateway server.
+The MCP gateway HTTP daemon.
 
 | Aspect | Technology |
 |---|---|
 | Runtime | Node.js / Bun |
 | MCP SDK | `@modelcontextprotocol/sdk` v1.12 |
-| Transport | stdio (with MCP client) |
+| Client Transport | StreamableHTTPServerTransport (HTTP) |
+| Downstream Transports | stdio, SSE, streamable-http |
 | Config | Zod schema validation |
 
 ### `apps/docs/`
@@ -66,8 +67,8 @@ TypeScript type definitions used across all applications:
 
 - `Skill`, `SkillMetadata` — skill data types
 - `SkillManagementConfig` — configuration structure
-- `DownstreamServerConfig`, `TransportConfig` — server connection types
-- `GatewayStatus` — runtime status types
+- `DownstreamServerConfig`, `TransportConfig`, `ServerScope` — server connection types
+- `GatewayStatus` — runtime status types (PID, port, URL, active sessions, server states)
 
 ### `packages/ui/`
 

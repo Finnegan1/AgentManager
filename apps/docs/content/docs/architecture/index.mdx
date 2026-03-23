@@ -3,35 +3,52 @@ title: Architecture
 description: High-level architecture of Skill Gateway — how the components fit together.
 ---
 
-Skill Gateway is composed of three main components that work together through shared files on disk.
+Skill Gateway is composed of three main components that work together through shared files on disk and HTTP connections.
 
 ## System Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     AI Client (e.g. Claude)                 │
-│                         connects via MCP                    │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ stdio
-                           ▼
+│              AI Clients (e.g. Claude Code)                   │
+│                                                             │
+│  Client A (/project-a)    Client B (/project-b)            │
+│  Client C (/project-a)                                     │
+└──────┬───────────────────────┬──────────────────────────────┘
+       │                       │
+       │  HTTP (127.0.0.1:24842/mcp)
+       ▼                       ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   MCP Gateway Server                        │
+│                   MCP Gateway HTTP Daemon                    │
 │                   (Node.js / Bun)                           │
 │                                                             │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  HTTP Server + Session Manager                       │    │
+│  │  Map<sessionId, { Server, Transport, projectRoot }>  │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                             │
 │  ┌──────────┐  ┌──────────────┐  ┌───────────────────────┐ │
-│  │  Skill   │  │   Config     │  │    Proxy Manager      │ │
-│  │ Manager  │  │   Store      │  │  ┌─────────────────┐  │ │
-│  │          │  │              │  │  │  Tool Registry   │  │ │
-│  │ list     │  │ watches      │  │  │  Resource Reg.   │  │ │
-│  │ search   │  │ config.json  │  │  │  Prompt Reg.     │  │ │
-│  │ get      │  │              │  │  └─────────────────┘  │ │
-│  └──────────┘  └──────────────┘  └───────┬───┬───┬───────┘ │
+│  │  Skill   │  │   Config     │  │  Global Proxy Manager │ │
+│  │ Manager  │  │   Store      │  │  (scope: "global")    │ │
+│  │          │  │              │  │  ┌─────────────────┐  │ │
+│  │ list     │  │ watches      │  │  │  Tool Registry   │  │ │
+│  │ search   │  │ config.json  │  │  │  Resource Reg.   │  │ │
+│  │ get      │  │              │  │  │  Prompt Reg.     │  │ │
+│  └──────────┘  └──────────────┘  │  └─────────────────┘  │ │
+│       │              │           └───────┬───┬───┬───────┘ │
 │       │              │                   │   │   │         │
-└───────┼──────────────┼───────────────────┼───┼───┼─────────┘
-        │              │                   │   │   │
-   reads from     reads/watches        connects to
-        │              │                   │   │   │
-        ▼              ▼                   ▼   ▼   ▼
+│  ┌────┼──────────────┼───────────────────┼───┼───┼───────┐ │
+│  │  Project Connection Pool                              │ │
+│  │  (scope: "project", per-root with ref counting)       │ │
+│  │                                                       │ │
+│  │  /project-a → ProxyManager (shared by sessions A, C)  │ │
+│  │  /project-b → ProxyManager (used by session B)        │ │
+│  └───────────────────────┬───┬───┬───────────────────────┘ │
+│                          │   │   │                          │
+└──────────────────────────┼───┼───┼──────────────────────────┘
+       │                   │   │   │
+  reads from           connects to (downstream servers)
+       │                   │   │   │
+       ▼                   ▼   ▼   ▼
 ┌─────────────────────────────┐    ┌───┐ ┌───┐ ┌───┐
 │  ~/.skill-management/       │    │MCP│ │MCP│ │MCP│
 │  ├── config.json            │    │ A │ │ B │ │ C │
@@ -64,14 +81,28 @@ Skill Gateway is composed of three main components that work together through sh
 
 ## Component Responsibilities
 
-### MCP Gateway Server (`apps/skill-mcp/`)
+### MCP Gateway HTTP Daemon (`apps/skill-mcp/`)
 
-The Node.js/Bun process that runs as an MCP server:
+A Node.js/Bun HTTP daemon that runs on `127.0.0.1:24842`:
 
+- **Accepts HTTP connections** from multiple AI clients simultaneously
+- **Manages sessions** — each client gets its own `Server` + `StreamableHTTPServerTransport` pair
 - **Serves skills** from `~/.skill-management/skills/` via native tools
 - **Proxies downstream servers** — connects to all enabled servers, namespaces their capabilities, and forwards requests
+- **Splits by scope** — global-scope servers are shared; project-scope servers are managed per project root
 - **Watches configuration** — picks up changes to `config.json` without restart
-- **Writes status** — periodically writes its PID and connection states to `status.json`
+- **Writes status** — periodically writes its PID, port, URL, active sessions, and connection states to `status.json`
+
+Key internal components:
+
+| Component | Responsibility |
+|---|---|
+| **HTTP Server** | Routes incoming requests by session ID |
+| **SessionManager** | Creates/removes session pairs, broadcasts notifications, cleans up inactive sessions (30min timeout) |
+| **Global ProxyManager** | Manages downstream connections for `scope: "global"` servers |
+| **ProjectConnectionPool** | Manages per-project-root ProxyManagers for `scope: "project"` servers, with reference counting and 5-minute cleanup delay |
+| **ConfigStore** | Watches and validates `config.json`, emits change events |
+| **SkillManager** | Reads and searches skill files from disk |
 
 ### Desktop App (`apps/skill-manager/`)
 
@@ -90,6 +121,6 @@ The gateway and desktop app don't communicate directly. Instead, they share thre
 |---|---|---|---|
 | `config.json` | Desktop App | Gateway (watched) | Server configuration, settings |
 | `skills/*.md` | Desktop App | Gateway | Skill content files |
-| `status.json` | Gateway | Desktop App (polled) | Gateway runtime status |
+| `status.json` | Gateway | Desktop App (polled) | Gateway runtime status (PID, port, URL, active sessions, server states) |
 
 This file-based IPC keeps the two processes fully decoupled — either can run independently.

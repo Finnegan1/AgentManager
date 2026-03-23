@@ -43,14 +43,44 @@ On first launch, the app creates the configuration directory at `~/.skill-manage
 
 ## Starting the MCP Gateway
 
-The MCP gateway server runs separately from the desktop app. To start it:
+The MCP gateway runs as an HTTP daemon — a long-running background process that multiple AI clients can connect to simultaneously. Start it with:
 
 ```bash
 cd apps/skill-mcp
-bun run src/index.ts
+bun run dev:server
 ```
 
-Or, if you've configured your AI client (e.g. Claude) to use it, the gateway starts automatically when the client connects via the MCP protocol.
+Or for production (requires building first with `bun run build`):
+
+```bash
+cd apps/skill-mcp
+bun run start
+```
+
+The gateway starts listening on `http://127.0.0.1:24842/mcp` by default. You can specify a custom port:
+
+```bash
+bun run dev:server -- --port 3000
+```
+
+<Callout>
+  The gateway must be running before your AI client can connect. Unlike stdio-based servers, the gateway is **not** automatically started by the AI client — it runs as an independent daemon process.
+</Callout>
+
+## Connecting Your AI Client
+
+Configure your AI client to connect to the running gateway. For Claude Code, add this to your `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "skill-gateway": {
+      "type": "http",
+      "url": "http://127.0.0.1:24842/mcp"
+    }
+  }
+}
+```
 
 <Callout>
   The desktop app and the MCP gateway communicate through shared files on disk — they don't need a direct network connection. The gateway writes its status to `~/.skill-management/status.json`, and the desktop app polls it every 5 seconds.

@@ -59,16 +59,25 @@ Your skill is now stored at `~/.skill-management/skills/typescript-best-practice
 
 The server appears in your list. Toggle the **Aktiviert** (Enabled) switch to connect it.
 
-## Step 4: Connect Your AI Client
+## Step 4: Start the Gateway and Connect Your AI Client
 
-Add the Skill Gateway MCP server to your AI client's configuration. For example, in Claude's `.mcp.json`:
+First, start the gateway daemon in a terminal:
+
+```bash
+cd skills-mcp/skill-management/apps/skill-mcp
+bun run dev:server
+```
+
+The gateway starts listening on `http://127.0.0.1:24842/mcp`.
+
+Then, add the gateway to your AI client's configuration. For Claude Code, create or edit `.mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "skill-gateway": {
-      "command": "bun",
-      "args": ["/path/to/skills-mcp/skill-management/apps/skill-mcp/src/index.ts"]
+      "type": "http",
+      "url": "http://127.0.0.1:24842/mcp"
     }
   }
 }

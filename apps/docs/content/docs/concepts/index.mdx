@@ -15,9 +15,7 @@ Each skill is a `.md` file with YAML frontmatter for metadata (name, tags, descr
 
 ## MCP Gateway
 
-The **MCP gateway** is a Model Context Protocol server that acts as a single entry point for your AI client. Instead of connecting to many MCP servers individually, you connect to the gateway once — and it aggregates tools, resources, and prompts from all your downstream servers under a unified namespace.
-
-The gateway also exposes native tools for listing, searching, and retrieving skills.
+The **MCP gateway** is a centralized HTTP daemon that acts as a single entry point for your AI clients. It runs as a background process on `127.0.0.1:24842` and multiple AI clients can connect to it simultaneously via HTTP. The gateway aggregates tools, resources, and prompts from all your downstream servers under a unified namespace, and also exposes native tools for listing, searching, and retrieving skills.
 
 [Learn more about the MCP Gateway](/docs/concepts/mcp-gateway)
 
@@ -25,6 +23,8 @@ The gateway also exposes native tools for listing, searching, and retrieving ski
 
 **Downstream servers** are external MCP servers that the gateway connects to and proxies. Each downstream server can expose tools, resources, and prompts. The gateway namespaces them to prevent collisions and forwards requests transparently.
 
-Three transport types are supported: stdio (local processes), SSE (Server-Sent Events), and streamable HTTP.
+Three transport types are supported for downstream connections: stdio (local processes), SSE (Server-Sent Events), and streamable HTTP.
+
+Each downstream server has a **scope** — either `"global"` (shared across all client sessions) or `"project"` (started per project root with the project's working directory).
 
 [Learn more about Downstream Servers](/docs/concepts/downstream-servers)

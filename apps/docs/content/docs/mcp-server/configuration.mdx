@@ -19,12 +19,14 @@ The desktop app reads and writes this file. The gateway watches it for changes a
 {
   "version": "1.0",
   "gateway": {
-    "autoStart": false
+    "autoStart": false,
+    "port": 24842
   },
   "servers": {
     "database": {
       "name": "Database Tools",
       "enabled": true,
+      "scope": "global",
       "transport": {
         "type": "stdio",
         "command": "bun",
@@ -37,12 +39,23 @@ The desktop app reads and writes this file. The gateway watches it for changes a
     "web-search": {
       "name": "Web Search",
       "enabled": true,
+      "scope": "global",
       "transport": {
         "type": "sse",
         "url": "https://api.example.com/mcp",
         "headers": {
           "Authorization": "Bearer sk-abc123"
         }
+      }
+    },
+    "filesystem": {
+      "name": "Filesystem Tools",
+      "enabled": true,
+      "scope": "project",
+      "transport": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["@mcp/filesystem", "."]
       }
     },
     "ai-helpers": {
@@ -60,6 +73,36 @@ The desktop app reads and writes this file. The gateway watches it for changes a
 }
 ```
 
+## Server Scope
+
+Each downstream server has an optional `scope` field that controls how the gateway manages it:
+
+| Scope | Behavior |
+|---|---|
+| `"global"` (default) | Started once when the gateway starts. Shared across all client sessions. |
+| `"project"` | Started per project root. The `cwd` of stdio transports is overridden to the project directory. Sessions with the same project root share connections. |
+
+See [Downstream Servers — Scoping](/docs/concepts/downstream-servers#scoping) for detailed examples.
+
+## Client Configuration
+
+To connect your AI client to the gateway, configure it to use the HTTP endpoint. For Claude Code, add to `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "skill-gateway": {
+      "type": "http",
+      "url": "http://127.0.0.1:24842/mcp"
+    }
+  }
+}
+```
+
+<Callout>
+  The gateway must be running before the client connects. Start it with `bun run dev:server` in the `apps/skill-mcp/` directory.
+</Callout>
+
 ## Field Reference
 
 For a complete reference of all configuration fields, see the [Config Reference](/docs/reference/config).
@@ -73,6 +116,8 @@ The gateway uses `fs.watch()` to monitor the config file. Changes are:
 3. **Diffed** against the previous config to determine what changed
 
 Invalid config changes are logged and ignored — the gateway continues with the last valid configuration.
+
+When a valid config change is detected, all active sessions are notified via `listChanged` notifications so clients can re-fetch the available tools, resources, and prompts.
 
 ## Default Configuration
 

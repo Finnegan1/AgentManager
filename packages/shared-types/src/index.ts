@@ -3,6 +3,7 @@ export type {
   SseTransportConfig,
   StreamableHttpTransportConfig,
   TransportConfig,
+  ServerScope,
   DownstreamServerConfig,
 } from "./mcp-server-config.js";
 

@@ -45,18 +45,21 @@ Contains all configuration: downstream server definitions, gateway settings, and
 
 | Aspect | Detail |
 |---|---|
-| **Created by** | Gateway process |
+| **Created by** | Gateway HTTP daemon |
 | **Written by** | Gateway (every 5 seconds) |
 | **Read by** | Desktop app (polled every 5 seconds) |
 | **Format** | JSON |
 | **Cleaned up** | On gateway shutdown, or when desktop app detects stale PID |
 
-Contains the gateway's runtime status:
+Contains the gateway's runtime status, including HTTP daemon details and active session count:
 
 ```json
 {
   "pid": 12345,
   "startedAt": "2026-03-22T10:00:00.000Z",
+  "port": 24842,
+  "url": "http://127.0.0.1:24842/mcp",
+  "activeSessions": 2,
   "servers": {
     "db": {
       "connected": true,
@@ -76,7 +79,7 @@ Contains the gateway's runtime status:
 ```
 
 <Callout type="warn">
-  This file is transient — it's written by the gateway process and cleaned up on shutdown. If the gateway crashes, the desktop app detects the stale PID and cleans up the file.
+  This file is transient — it's written by the gateway HTTP daemon and cleaned up on shutdown. If the gateway crashes, the desktop app detects the stale PID and cleans up the file.
 </Callout>
 
 ### `skills/*.md`

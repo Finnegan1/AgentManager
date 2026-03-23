@@ -92,6 +92,71 @@ When a downstream server connects successfully, the gateway discovers its capabi
 
 These are registered in the gateway's internal registries and become available to the AI client under the server's namespace prefix.
 
+## Scoping
+
+Each downstream server has a **scope** that controls how the gateway manages it. The scope is set via the `scope` field in the server configuration (default: `"global"`).
+
+### Global Scope
+
+```json
+{
+  "name": "Web Search API",
+  "enabled": true,
+  "scope": "global",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["@mcp/web-search"]
+  }
+}
+```
+
+**Global** servers are started once when the gateway starts and shared across all connected client sessions. Use this for:
+- APIs and web services
+- Database connections
+- Any server that doesn't depend on a specific project directory
+
+### Project Scope
+
+```json
+{
+  "name": "Filesystem Tools",
+  "enabled": true,
+  "scope": "project",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["@mcp/filesystem", "."]
+  }
+}
+```
+
+**Project** servers are started per project root. When a client session is associated with a project directory (e.g. `/Users/you/my-project`), the gateway:
+
+1. Creates a separate set of connections for that project root
+2. Overrides the `cwd` of stdio transports to the project directory
+3. Shares these connections with other sessions that have the same project root
+
+This is ideal for:
+- Filesystem and file search tools
+- Linters and code analysis
+- Git MCP servers
+- Build tools
+
+### Connection Sharing
+
+Sessions sharing the same project root share downstream connections through a **ProjectConnectionPool**:
+
+```
+Session A (/project-a)  ──┐
+                           ├── Shared project connections for /project-a
+Session C (/project-a)  ──┘
+
+Session B (/project-b)  ──── Separate project connections for /project-b
+```
+
+When the last session for a project root disconnects, the connections are kept alive for 5 minutes before being cleaned up — in case a new session reconnects quickly.
+
 ## Enabling and Disabling
 
 Each server has an `enabled` flag. When a server is disabled:
