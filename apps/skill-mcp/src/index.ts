@@ -33,6 +33,12 @@ configStore.on("changed", (newConfig) => {
   skillManager.setDirectory(newConfig.skills.directory);
 });
 
+// Log config store errors instead of crashing (unhandled "error" events
+// on EventEmitter cause the process to exit)
+configStore.on("error", (err) => {
+  console.error("Config store error:", err);
+});
+
 // --- Status file management ---
 
 let globalProxy: ProxyManager | undefined;

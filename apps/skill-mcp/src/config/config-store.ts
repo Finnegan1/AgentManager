@@ -48,8 +48,18 @@ export class ConfigStore extends EventEmitter<ConfigStoreEvents> {
   startWatching(): void {
     if (this.watcher) return;
 
+    const configFilename = path.basename(CONFIG_PATH);
+
     try {
-      this.watcher = fs.watch(CONFIG_PATH, (_eventType) => {
+      // Watch the DIRECTORY instead of the file. On macOS under Bun,
+      // fs.watch on a file uses kqueue which tracks the inode. Atomic
+      // writes (tmp + rename) replace the inode, causing the watcher
+      // to go stale. Directory-level watching uses FSEvents which
+      // reliably detects atomic renames.
+      this.watcher = fs.watch(CONFIG_DIR, (_eventType, filename) => {
+        // Only react to changes to our config file (not tmp files, status, etc.)
+        if (filename !== configFilename) return;
+
         // Debounce to avoid rapid successive events
         if (this.debounceTimer) clearTimeout(this.debounceTimer);
         this.debounceTimer = setTimeout(() => {
@@ -59,6 +69,19 @@ export class ConfigStore extends EventEmitter<ConfigStoreEvents> {
 
       this.watcher.on("error", (err) => {
         this.emit("error", err);
+      });
+
+      // Low-frequency polling fallback (stat-based) as a safety net
+      // in case fs.watch fails silently on some runtime/OS combination.
+      // reloadConfig() already does a JSON deep-equality check, so
+      // duplicate triggers from both watchers are harmless.
+      fs.watchFile(CONFIG_PATH, { interval: 5000 }, (curr, prev) => {
+        if (curr.mtimeMs !== prev.mtimeMs) {
+          if (this.debounceTimer) clearTimeout(this.debounceTimer);
+          this.debounceTimer = setTimeout(() => {
+            this.reloadConfig();
+          }, 200);
+        }
       });
     } catch (err) {
       this.emit("error", err as Error);
@@ -75,6 +98,7 @@ export class ConfigStore extends EventEmitter<ConfigStoreEvents> {
       this.watcher.close();
       this.watcher = null;
     }
+    fs.unwatchFile(CONFIG_PATH);
   }
 
   /** Reload config from disk and emit changed event if different */
