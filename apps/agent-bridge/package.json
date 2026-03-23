@@ -1,0 +1,18 @@
+{
+  "name": "agent-bridge",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.81",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.0",
+    "typescript": "~5.8.3"
+  }
+}

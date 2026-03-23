@@ -9,9 +9,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Server, BookOpen } from "lucide-react";
+import { LayoutDashboard, Server, BookOpen, Bot } from "lucide-react";
 
-export type Page = "dashboard" | "servers" | "skills";
+export type Page = "dashboard" | "servers" | "skills" | "agent";
 
 interface AppSidebarProps {
   currentPage: Page;
@@ -22,6 +22,7 @@ const navItems = [
   { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
   { id: "servers" as const, label: "Server", icon: Server },
   { id: "skills" as const, label: "Skills", icon: BookOpen },
+  { id: "agent" as const, label: "Agent", icon: Bot },
 ];
 
 export function AppSidebar({ currentPage, onNavigate }: AppSidebarProps) {

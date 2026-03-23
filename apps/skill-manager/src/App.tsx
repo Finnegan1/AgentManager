@@ -8,11 +8,13 @@ import { AppSidebar, type Page } from "@/components/layout/app-sidebar";
 import { Dashboard } from "@/components/dashboard/dashboard";
 import { ServerList } from "@/components/servers/server-list";
 import { SkillList } from "@/components/skills/skill-list";
+import { AgentChat } from "@/components/agent/agent-chat";
 
 const PAGE_TITLES: Record<Page, string> = {
   dashboard: "Dashboard",
   servers: "Server",
   skills: "Skills",
+  agent: "Agent",
 };
 
 function App() {
@@ -35,6 +37,7 @@ function App() {
               {currentPage === "dashboard" && <Dashboard />}
               {currentPage === "servers" && <ServerList />}
               {currentPage === "skills" && <SkillList />}
+              {currentPage === "agent" && <AgentChat />}
             </main>
           </SidebarInset>
         </SidebarProvider>

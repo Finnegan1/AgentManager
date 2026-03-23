@@ -109,3 +109,22 @@ export async function deleteSkill(name: string): Promise<void> {
 export async function getGatewayStatus(): Promise<GatewayStatus> {
   return invoke<GatewayStatus>("get_gateway_status");
 }
+
+// --- Agent Bridge Commands ---
+
+export interface AgentBridgeStatus {
+  running: boolean;
+  port: number | null;
+}
+
+export async function startAgentBridge(): Promise<number> {
+  return invoke<number>("start_agent_bridge");
+}
+
+export async function stopAgentBridge(): Promise<void> {
+  return invoke("stop_agent_bridge");
+}
+
+export async function getAgentBridgeStatus(): Promise<AgentBridgeStatus> {
+  return invoke<AgentBridgeStatus>("get_agent_bridge_status");
+}
