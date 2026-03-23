@@ -110,7 +110,14 @@ export function ServerForm({
                     .filter((l) => l.includes("="))
                     .map((l) => {
                       const idx = l.indexOf("=");
-                      return [l.slice(0, idx), l.slice(idx + 1)];
+                      const key = l.slice(0, idx).trim();
+                      let value = l.slice(idx + 1).trim();
+                      // Strip surrounding quotes
+                      if ((value.startsWith('"') && value.endsWith('"')) ||
+                          (value.startsWith("'") && value.endsWith("'"))) {
+                        value = value.slice(1, -1);
+                      }
+                      return [key, value];
                     }),
                 ),
               }
