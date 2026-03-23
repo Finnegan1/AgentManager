@@ -9,14 +9,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, ExternalLink, Download } from "lucide-react";
 import { useAppSkills } from "@/contexts/app-context";
 import { SkillForm } from "./skill-form";
+import { toast } from "sonner";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import type { SkillContent } from "@/lib/tauri-commands";
 
 export function SkillList() {
-  const { skills, loadSkill, createSkill, updateSkill, removeSkill } = useAppSkills();
+  const { skills, loadSkill, createSkill, updateSkill, removeSkill, installFromMarketplace } = useAppSkills();
   const [search, setSearch] = useState("");
+  const [installCommand, setInstallCommand] = useState("");
+  const [installing, setInstalling] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
   const [editingSkill, setEditingSkill] = useState<{
@@ -89,6 +93,20 @@ export function SkillList() {
     }
   };
 
+  const handleInstallFromMarketplace = async () => {
+    if (!installCommand.trim()) return;
+    setInstalling(true);
+    try {
+      const skillName = await installFromMarketplace(installCommand.trim());
+      toast.success(`Skill "${skillName}" erfolgreich installiert`);
+      setInstallCommand("");
+    } catch (err) {
+      toast.error(String(err));
+    } finally {
+      setInstalling(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -98,10 +116,45 @@ export function SkillList() {
             Skill-Markdown-Dateien verwalten
           </p>
         </div>
-        <Button onClick={handleAdd}>
-          <Plus className="mr-2 size-4" />
-          Skill erstellen
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => openUrl("https://skills.sh/")}
+          >
+            <ExternalLink className="mr-2 size-4" />
+            Skill Marketplace
+          </Button>
+          <Button onClick={handleAdd}>
+            <Plus className="mr-2 size-4" />
+            Skill erstellen
+          </Button>
+        </div>
+      </div>
+
+      {/* Marketplace Install */}
+      <div className="space-y-1.5">
+        <p className="text-xs text-muted-foreground">
+          Installationsbefehl von skills.sh hier einfugen
+        </p>
+        <div className="flex gap-2">
+          <Input
+            value={installCommand}
+            onChange={(e) => setInstallCommand(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleInstallFromMarketplace();
+            }}
+            placeholder="npx skills add https://github.com/owner/repo --skill skill-name"
+            className="font-mono text-xs"
+          />
+          <Button
+            onClick={handleInstallFromMarketplace}
+            disabled={!installCommand.trim() || installing}
+            size="default"
+          >
+            <Download className="mr-2 size-4" />
+            {installing ? "Installiert..." : "Installieren"}
+          </Button>
+        </div>
       </div>
 
       {/* Search */}

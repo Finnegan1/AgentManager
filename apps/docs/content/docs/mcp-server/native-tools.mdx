@@ -1,9 +1,9 @@
 ---
 title: Native Tools
-description: The 5 built-in MCP tools for skill management and gateway introspection.
+description: The 7 built-in MCP tools for skill management, marketplace, and gateway introspection.
 ---
 
-The gateway exposes five **native tools** that are always available, regardless of whether any downstream servers are connected.
+The gateway exposes seven **native tools** that are always available, regardless of whether any downstream servers are connected.
 
 ## Skill Tools
 
@@ -54,24 +54,33 @@ Retrieves the full content of a specific skill, including both metadata and mark
 
 | Name | Type | Description |
 |---|---|---|
-| `id` | `string` | The skill ID (filename without `.md`) |
+| `id` | `string` | The skill ID (directory name) |
 
-**Returns:** The complete skill object:
+**Returns:** The complete skill content including metadata, markdown body, and a list of additional files in the skill directory.
 
-```json
-{
-  "metadata": {
-    "id": "typescript-best-practices",
-    "name": "TypeScript Best Practices",
-    "tags": ["typescript", "coding"],
-    "description": "Guidelines for writing clean TypeScript.",
-    "version": "1.0",
-    "author": "Jane Doe",
-    "created": "2026-01-15",
-    "updated": "2026-03-20"
-  },
-  "content": "## Use strict mode\n\nEnable `strict: true`..."
-}
+### `skills__sync`
+
+Manually triggers a symlink sync from the skills directory to `~/.claude/skills/`. Useful after creating or deleting skills outside the desktop app.
+
+**Parameters:** None
+
+**Returns:** A confirmation message with the number of synced skills.
+
+### `skills__marketplace_install`
+
+Installs a skill from the [skills.sh](https://skills.sh/) marketplace. Accepts an install command copied from skills.sh, fetches the `SKILL.md` from GitHub, saves it locally, and triggers a symlink sync.
+
+**Parameters:**
+
+| Name | Type | Description |
+|---|---|---|
+| `command` | `string` | The install command from skills.sh, e.g. `"npx skills add https://github.com/owner/repo --skill skill-name"` |
+
+**Returns:** A success message with the installed skill name, or an error if the skill was not found or already exists.
+
+<Callout>
+  The marketplace install fetches the `SKILL.md` directly from the GitHub repository's raw content. It tries multiple paths (`{skill}/SKILL.md` and `skills/{skill}/SKILL.md`) and branches (`main`, `master`) to locate the file.
+</Callout>
 ```
 
 ## Gateway Tools

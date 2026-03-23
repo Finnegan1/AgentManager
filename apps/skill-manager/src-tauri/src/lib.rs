@@ -6,8 +6,8 @@ use commands::agent::{
 use commands::config::{get_config, save_config};
 use commands::mcp_process::get_gateway_status;
 use commands::skills::{
-    create_skill_directory, delete_skill, delete_skill_file, get_skill, list_skill_files,
-    list_skills, read_skill_file, save_skill, save_skill_file,
+    create_skill_directory, delete_skill, delete_skill_file, get_skill, install_marketplace_skill,
+    list_skill_files, list_skills, read_skill_file, save_skill, save_skill_file,
 };
 use std::sync::Mutex;
 
@@ -28,6 +28,7 @@ pub fn run() {
             save_skill_file,
             delete_skill_file,
             create_skill_directory,
+            install_marketplace_skill,
             get_gateway_status,
             start_agent_bridge,
             stop_agent_bridge,

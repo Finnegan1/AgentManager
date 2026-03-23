@@ -43,7 +43,11 @@ Enable `strict: true` in your `tsconfig.json` for maximum type safety.
 
 5. Click **Speichern** (Save)
 
-Your skill is now stored at `~/.skill-management/skills/typescript-best-practices.md` and is immediately available through the MCP gateway.
+Your skill is now stored at `~/.skill-management/skills/typescript-best-practices/SKILL.md`, symlinked to `~/.claude/skills/`, and immediately available through the MCP gateway and Claude Code.
+
+<Callout>
+  **Tip:** You can also install skills from the [skills.sh marketplace](https://skills.sh/). Click **Skill Marketplace** on the Skills page, copy an install command, and paste it into the app.
+</Callout>
 
 ## Step 3: Add a Downstream Server
 
@@ -87,6 +91,7 @@ Once connected, your AI client can:
 - Use `skills__list` to see all your skills
 - Use `skills__search` to find relevant skills by query
 - Use `skills__get` to read the full content of a skill
+- Use `skills__marketplace_install` to install skills from [skills.sh](https://skills.sh/)
 - Access all tools from your downstream servers (prefixed with the server key)
 
 ## Step 5: Verify on the Dashboard

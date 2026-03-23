@@ -1,19 +1,31 @@
 ---
 title: Skill File Format
-description: Complete reference for the skill markdown file format with YAML frontmatter.
+description: Complete reference for the skill directory format with SKILL.md and YAML frontmatter.
 ---
 
-Skills are stored as markdown files (`.md`) with YAML frontmatter metadata. This page documents the complete format.
+Each skill is a **directory** containing a `SKILL.md` file with YAML frontmatter metadata, and optionally additional supporting files. This page documents the complete format.
 
-## File Structure
+## Directory Structure
 
-Every skill file has two parts separated by the `---` delimiters:
+Each skill lives in its own directory:
+
+```
+my-skill/
+  SKILL.md            # Required — main skill content
+  references/          # Optional — supporting documents
+  scripts/             # Optional — helper scripts
+  assets/              # Optional — images, data files, etc.
+```
+
+## SKILL.md Structure
+
+The `SKILL.md` file has two parts separated by `---` delimiters:
 
 ```markdown
 ---
 name: "Skill Name"
-tags: ["tag1", "tag2"]
 description: "A short description of what this skill covers."
+tags: ["tag1", "tag2"]
 version: "1.0"
 author: "Author Name"
 created: "2026-01-15"
@@ -28,25 +40,41 @@ the AI assistant will read when it retrieves this skill.
 
 ## Frontmatter Fields
 
+### Base Fields
+
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `name` | `string` | Yes | Human-readable display name |
-| `tags` | `string[]` | Yes | Tags for categorization and search |
 | `description` | `string` | Yes | Short description (shown in skill cards and search results) |
-| `version` | `string` | Yes | Version identifier (e.g. `"1.0"`, `"2.3"`) |
-| `author` | `string` | Yes | Author name |
-| `created` | `string` | Yes | ISO date of creation (e.g. `"2026-01-15"`) |
-| `updated` | `string` | Yes | ISO date of last modification |
+| `tags` | `string[]` | No | Tags for categorization and search |
+| `version` | `string` | No | Version identifier (e.g. `"1.0"`, `"2.3"`) |
+| `author` | `string` | No | Author name |
+| `created` | `string` | No | ISO date of creation (e.g. `"2026-01-15"`) |
+| `updated` | `string` | No | ISO date of last modification |
 
-## Filename Convention
+### Claude Code Fields
 
-The filename (without `.md`) becomes the **skill ID**:
+These optional fields control how Claude Code handles the skill:
 
-| Filename | Skill ID |
+| Field | Type | Description |
+|---|---|---|
+| `allowed-tools` | `string` | Pre-approved tools, e.g. `"Read, Grep, Glob, Bash(npm test *)"` |
+| `disable-model-invocation` | `boolean` | If `true`, only users can invoke via `/name` (Claude cannot auto-trigger) |
+| `user-invocable` | `boolean` | If `false`, acts as background knowledge only (not invocable via `/`) |
+| `context` | `string` | Execution context — `"fork"` runs in an isolated subagent |
+| `agent` | `string` | Agent type when forked, e.g. `"Explore"`, `"Plan"` |
+| `model` | `string` | Model override, e.g. `"haiku"`, `"sonnet"`, `"opus"` |
+| `argument-hint` | `string` | Hint shown after `/name`, e.g. `"<file> [--verbose]"` |
+
+## Directory Name Convention
+
+The directory name becomes the **skill ID**:
+
+| Directory | Skill ID |
 |---|---|
-| `typescript-best-practices.md` | `typescript-best-practices` |
-| `react-patterns.md` | `react-patterns` |
-| `api-design.md` | `api-design` |
+| `typescript-best-practices/` | `typescript-best-practices` |
+| `react-patterns/` | `react-patterns` |
+| `api-design/` | `api-design` |
 
 The skill ID is used in all MCP tool calls (`skills__get`, etc.) and must be unique.
 
@@ -67,12 +95,15 @@ The body can contain any valid markdown:
 ```markdown
 ---
 name: "React Component Patterns"
-tags: ["react", "components", "patterns", "frontend"]
 description: "Common React component patterns including composition, render props, and hooks."
+tags: ["react", "components", "patterns", "frontend"]
 version: "2.0"
 author: "Jane Doe"
 created: "2026-01-10"
 updated: "2026-03-18"
+allowed-tools: "Read, Grep, Glob"
+context: fork
+agent: Explore
 ---
 
 ## Composition Pattern
@@ -128,9 +159,16 @@ Skills are stored in the configured skills directory:
 
 ```
 ~/.skill-management/skills/
-  typescript-best-practices.md
-  react-patterns.md
-  api-design.md
+  typescript-best-practices/
+    SKILL.md
+  react-patterns/
+    SKILL.md
+    references/
+      hooks-api.md
+  api-design/
+    SKILL.md
 ```
 
 The directory path can be changed in the [configuration](/docs/reference/config) via the `skills.directory` field.
+
+Skills are automatically symlinked to `~/.claude/skills/` for Claude Code integration.

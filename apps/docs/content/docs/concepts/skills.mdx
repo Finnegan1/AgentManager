@@ -19,7 +19,7 @@ When your AI client connects to the Skill Gateway, it can list, search, and read
 
 ## File Format
 
-Every skill file has two parts: a **YAML frontmatter** header and a **markdown body**.
+Each skill is a **directory** containing a `SKILL.md` file and optional additional files. The `SKILL.md` has two parts: a **YAML frontmatter** header and a **markdown body**.
 
 ```markdown
 ---
@@ -43,32 +43,71 @@ Use `interface` for object shapes and `type` for unions, intersections, and prim
 
 ## Metadata Fields
 
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | `string` | Yes | Human-readable display name |
+| `description` | `string` | Yes | Short description shown in listings |
+| `tags` | `string[]` | No | Tags for categorization and search |
+| `version` | `string` | No | Version string (e.g. `"1.0"`) |
+| `author` | `string` | No | Author name |
+| `created` | `string` | No | ISO date of creation (e.g. `"2026-01-15"`) |
+| `updated` | `string` | No | ISO date of last update |
+
+### Claude Code Fields
+
+Skills can include optional Claude Code-specific frontmatter fields:
+
 | Field | Type | Description |
 |---|---|---|
-| `name` | `string` | Human-readable display name |
-| `tags` | `string[]` | Tags for categorization and search |
-| `description` | `string` | Short description shown in listings |
-| `version` | `string` | Version string (e.g. `"1.0"`) |
-| `author` | `string` | Author name |
-| `created` | `string` | ISO date of creation (e.g. `"2026-01-15"`) |
-| `updated` | `string` | ISO date of last update |
+| `allowed-tools` | `string` | Pre-approved tools, e.g. `"Read, Grep, Glob, Bash"` |
+| `disable-model-invocation` | `boolean` | If `true`, only users can invoke via `/name` |
+| `user-invocable` | `boolean` | If `false`, acts as background knowledge only |
+| `context` | `string` | Execution context, e.g. `"fork"` for isolated subagent |
+| `agent` | `string` | Agent type when forked, e.g. `"Explore"` |
+| `model` | `string` | Model override, e.g. `"haiku"`, `"sonnet"` |
+| `argument-hint` | `string` | Hint for arguments, e.g. `"<file> [--verbose]"` |
 
 ## Storage
 
-Skills are stored as individual `.md` files in the skills directory:
+Skills are stored as directories inside the skills directory, each containing a `SKILL.md` file:
 
 ```
 ~/.skill-management/skills/
-  typescript-best-practices.md
-  react-patterns.md
-  api-design-guidelines.md
+  typescript-best-practices/
+    SKILL.md
+  react-patterns/
+    SKILL.md
+    references/
+      hooks-api.md
+  api-design-guidelines/
+    SKILL.md
 ```
 
-The filename (without `.md`) becomes the **skill ID**. This ID is used in all API calls (`skills__get`, `skills__search`, etc.).
+The directory name becomes the **skill ID**. This ID is used in all API calls (`skills__get`, `skills__search`, etc.). Skill directories can contain additional subdirectories like `references/`, `scripts/`, or `assets/` for supporting files.
 
 <Callout>
   The skills directory path defaults to `~/.skill-management/skills/` but can be changed in the [configuration](/docs/reference/config).
 </Callout>
+
+## Claude Code Integration
+
+Skills are automatically **symlinked** to `~/.claude/skills/`, making them discoverable by Claude Code via the `/skill-name` slash command. The symlink sync runs:
+
+- On gateway startup
+- When the skills directory changes (via file watcher)
+- Manually via the `skills__sync` MCP tool
+
+## Skills Marketplace
+
+You can install skills from the public [skills.sh](https://skills.sh/) marketplace — Anthropic's official skill registry with thousands of community-contributed skills.
+
+**In the desktop app:**
+1. Click **Skill Marketplace** to open skills.sh in your browser
+2. Find a skill and copy its install command (e.g. `npx skills add https://github.com/mattpocock/skills --skill grill-me`)
+3. Paste the command into the install input in the app and click **Installieren**
+
+**Via MCP tool:**
+Use `skills__marketplace_install` with the install command string. The gateway fetches the `SKILL.md` from GitHub, saves it locally, and syncs symlinks automatically.
 
 ## How Skills Are Accessed
 
@@ -79,5 +118,7 @@ Skills are accessed through the MCP gateway's native tools:
 | `skills__list` | Lists all skills with their metadata |
 | `skills__search` | Searches skills by query (matches name, tags, description, and content) |
 | `skills__get` | Retrieves the full content of a specific skill by ID |
+| `skills__sync` | Manually triggers symlink sync to `~/.claude/skills/` |
+| `skills__marketplace_install` | Installs a skill from skills.sh via its install command |
 
 The search is case-insensitive and checks across all metadata fields as well as the markdown body content.

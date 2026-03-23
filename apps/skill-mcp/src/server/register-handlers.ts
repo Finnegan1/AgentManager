@@ -42,7 +42,7 @@ export function registerRequestHandlers(
 
     // Check if it's a native skill tool
     if (name.startsWith("skills__")) {
-      return handleSkillToolCall(name, toolArgs, skillManager, symlinker);
+      return await handleSkillToolCall(name, toolArgs, skillManager, symlinker);
     }
 
     // Check if it's a gateway meta-tool

@@ -152,6 +152,12 @@ export async function createSkillDirectory(
   return invoke("create_skill_directory", { name, relativePath });
 }
 
+export async function installMarketplaceSkill(
+  command: string,
+): Promise<string> {
+  return invoke<string>("install_marketplace_skill", { command });
+}
+
 export async function getGatewayStatus(): Promise<GatewayStatus> {
   return invoke<GatewayStatus>("get_gateway_status");
 }

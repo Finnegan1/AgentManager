@@ -21,9 +21,18 @@ This directory is created automatically on first launch.
 ~/.skill-management/
 ├── config.json          # Main configuration file
 ├── status.json          # Gateway runtime status (auto-generated)
-└── skills/              # Skill markdown files
-    ├── skill-one.md
-    ├── skill-two.md
+└── skills/              # Skill directories
+    ├── skill-one/
+    │   └── SKILL.md
+    ├── skill-two/
+    │   ├── SKILL.md
+    │   └── references/
+    │       └── api.md
+    └── ...
+
+~/.claude/skills/        # Symlinks (auto-managed by gateway)
+    ├── skill-one -> ~/.skill-management/skills/skill-one
+    ├── skill-two -> ~/.skill-management/skills/skill-two
     └── ...
 ```
 
@@ -82,16 +91,27 @@ Contains the gateway's runtime status, including HTTP daemon details and active 
   This file is transient — it's written by the gateway HTTP daemon and cleaned up on shutdown. If the gateway crashes, the desktop app detects the stale PID and cleans up the file.
 </Callout>
 
-### `skills/*.md`
+### `skills/*/SKILL.md`
 
 | Aspect | Detail |
 |---|---|
-| **Created by** | Desktop app or manually |
-| **Written by** | Desktop app (via Tauri IPC) |
+| **Created by** | Desktop app, marketplace install, or manually |
+| **Written by** | Desktop app (via Tauri IPC) or marketplace installer |
 | **Read by** | Gateway (on demand, via MCP tool calls) |
 | **Format** | Markdown with YAML frontmatter |
 
-Each file is an individual skill. The filename (without `.md`) is the skill ID. See the [Skill Format Reference](/docs/reference/skill-format) for the file structure.
+Each subdirectory is an individual skill. The directory name is the skill ID. Skill directories can contain additional files (references, scripts, assets). See the [Skill Format Reference](/docs/reference/skill-format) for the file structure.
+
+### `~/.claude/skills/` (Symlinks)
+
+| Aspect | Detail |
+|---|---|
+| **Created by** | Gateway (symlink sync) |
+| **Written by** | Gateway (automatic, on skill changes) |
+| **Read by** | Claude Code |
+| **Format** | Symlinks pointing to skill directories |
+
+Symlinks are automatically managed by the gateway to make skills discoverable by Claude Code via `/skill-name` slash commands. The sync runs on startup, on file changes, and via `skills__sync`.
 
 ## Source Code Locations
 

@@ -2,6 +2,7 @@ import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import type { SkillManager } from "../skills/skill-manager.js";
 import type { SkillSymlinker } from "../skills/skill-symlink.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
+import { installSkillFromCommand, MarketplaceError } from "../skills/marketplace-client.js";
 
 /** Native skill tools that are always available on the gateway */
 export const SKILL_TOOLS: Tool[] = [
@@ -53,15 +54,31 @@ export const SKILL_TOOLS: Tool[] = [
       properties: {},
     },
   },
+  {
+    name: "skills__marketplace_install",
+    description:
+      "Install a skill from the skills.sh marketplace. Paste the install command from skills.sh (e.g., npx skills add https://github.com/mattpocock/skills --skill grill-me).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        command: {
+          type: "string",
+          description:
+            'The install command from skills.sh, e.g. "npx skills add https://github.com/owner/repo --skill skill-name"',
+        },
+      },
+      required: ["command"],
+    },
+  },
 ];
 
 /** Handle a skill tool call and return the MCP result */
-export function handleSkillToolCall(
+export async function handleSkillToolCall(
   toolName: string,
   args: Record<string, unknown>,
   skillManager: SkillManager,
   symlinker?: SkillSymlinker,
-): { content: Array<{ type: "text"; text: string }>; isError?: boolean } {
+): Promise<{ content: Array<{ type: "text"; text: string }>; isError?: boolean }> {
   switch (toolName) {
     case "skills__list": {
       const skills = skillManager.listSkills();
@@ -149,6 +166,42 @@ export function handleSkillToolCall(
           },
         ],
       };
+    }
+
+    case "skills__marketplace_install": {
+      const command = args.command as string;
+      if (!command) {
+        return {
+          content: [{ type: "text", text: "Missing required parameter: command" }],
+          isError: true,
+        };
+      }
+      try {
+        const result = await installSkillFromCommand(
+          command,
+          skillManager.getDirectory(),
+        );
+        if (symlinker) {
+          symlinker.syncAll();
+        }
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Successfully installed skill "${result.skillName}" from ${result.source}. It is now available in ~/.claude/skills/.`,
+            },
+          ],
+        };
+      } catch (err) {
+        const message =
+          err instanceof MarketplaceError
+            ? err.message
+            : `Failed to install skill: ${err}`;
+        return {
+          content: [{ type: "text", text: message }],
+          isError: true,
+        };
+      }
     }
 
     default:

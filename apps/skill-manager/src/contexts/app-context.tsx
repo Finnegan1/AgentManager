@@ -15,6 +15,7 @@ import {
   getSkill,
   saveSkill,
   deleteSkill,
+  installMarketplaceSkill,
   type SkillManagementConfig,
   type DownstreamServerConfig,
   type GatewayStatus,
@@ -57,6 +58,7 @@ interface SkillsState {
   createSkill: (id: string, content: string) => Promise<void>;
   updateSkill: (id: string, content: string) => Promise<void>;
   removeSkill: (id: string) => Promise<void>;
+  installFromMarketplace: (command: string) => Promise<string>;
 }
 
 // --- Combined Context ---
@@ -261,6 +263,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [loadSkillsList],
   );
 
+  const installFromMarketplaceFn = useCallback(
+    async (command: string): Promise<string> => {
+      const skillName = await installMarketplaceSkill(command);
+      await loadSkillsList();
+      return skillName;
+    },
+    [loadSkillsList],
+  );
+
   // ========== Context Value ==========
   const value: AppContextValue = {
     config: {
@@ -288,6 +299,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       createSkill: createSkillFn,
       updateSkill: updateSkillFn,
       removeSkill: removeSkillFn,
+      installFromMarketplace: installFromMarketplaceFn,
     },
   };
 
