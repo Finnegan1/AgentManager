@@ -4,6 +4,7 @@ import * as os from "node:os";
 
 import { ConfigStore } from "./config/config-store.js";
 import { SkillManager } from "./skills/skill-manager.js";
+import { SkillSymlinker } from "./skills/skill-symlink.js";
 import { ProxyManager } from "./gateway/proxy-manager.js";
 import { SessionManager } from "./server/session-manager.js";
 import { ProjectConnectionPool } from "./server/project-connection-pool.js";
@@ -26,11 +27,48 @@ const port =
 // --- Initialize shared core components ---
 
 const configStore = new ConfigStore();
-const skillManager = new SkillManager(configStore.config.skills.directory);
+const skillsDir = configStore.config.skills.directory;
 
-// Update skill manager when config changes
+const skillManager = new SkillManager(skillsDir);
+
+// Create symlinker and do initial sync
+const symlinker = new SkillSymlinker(skillsDir);
+symlinker.syncAll();
+
+// Watch skills directory for changes and re-sync symlinks (debounced)
+let symlinkSyncTimer: ReturnType<typeof setTimeout> | null = null;
+function scheduleSyncSymlinks(): void {
+  if (symlinkSyncTimer) clearTimeout(symlinkSyncTimer);
+  symlinkSyncTimer = setTimeout(() => {
+    symlinker.syncAll();
+  }, 500);
+}
+
+let skillsWatcher: fs.FSWatcher | null = null;
+function startSkillsWatcher(dir: string): void {
+  if (skillsWatcher) {
+    skillsWatcher.close();
+  }
+  try {
+    if (fs.existsSync(dir)) {
+      skillsWatcher = fs.watch(dir, { recursive: false }, () => {
+        scheduleSyncSymlinks();
+      });
+    }
+  } catch (err) {
+    console.error("Failed to watch skills directory:", err);
+  }
+}
+
+startSkillsWatcher(skillsDir);
+
+// Update skill manager + symlinker when config changes
 configStore.on("changed", (newConfig) => {
-  skillManager.setDirectory(newConfig.skills.directory);
+  const newDir = newConfig.skills.directory;
+  skillManager.setDirectory(newDir);
+  symlinker.setSourceDir(newDir);
+  symlinker.syncAll();
+  startSkillsWatcher(newDir);
 });
 
 // Log config store errors instead of crashing (unhandled "error" events
@@ -90,7 +128,7 @@ async function main() {
   const projectPool = new ProjectConnectionPool(configStore);
 
   // Create session manager
-  sessionManager = new SessionManager(globalProxy, skillManager, projectPool);
+  sessionManager = new SessionManager(globalProxy, skillManager, projectPool, symlinker);
 
   // Wire up the global proxy to broadcast via session manager
   globalProxy.setBroadcaster(sessionManager);
@@ -135,6 +173,8 @@ async function main() {
   // Graceful shutdown
   const shutdown = async () => {
     clearInterval(statusInterval);
+    if (symlinkSyncTimer) clearTimeout(symlinkSyncTimer);
+    if (skillsWatcher) skillsWatcher.close();
     configStore.stopWatching();
     await sessionManager!.shutdown();
     await projectPool.shutdown();

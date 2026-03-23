@@ -10,6 +10,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import type { ProxyManager } from "../gateway/proxy-manager.js";
 import type { SkillManager } from "../skills/skill-manager.js";
+import type { SkillSymlinker } from "../skills/skill-symlink.js";
 import { handleSkillToolCall } from "../tools/skill-tools.js";
 import { handleGatewayToolCall } from "../tools/gateway-tools.js";
 
@@ -23,6 +24,7 @@ export function registerRequestHandlers(
   globalProxy: ProxyManager,
   projectProxy: ProxyManager | null,
   skillManager: SkillManager,
+  symlinker?: SkillSymlinker,
 ): void {
   // Tools: List — merge global + project tools
   server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -40,7 +42,7 @@ export function registerRequestHandlers(
 
     // Check if it's a native skill tool
     if (name.startsWith("skills__")) {
-      return handleSkillToolCall(name, toolArgs, skillManager);
+      return handleSkillToolCall(name, toolArgs, skillManager, symlinker);
     }
 
     // Check if it's a gateway meta-tool

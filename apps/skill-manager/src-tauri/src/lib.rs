@@ -5,7 +5,10 @@ use commands::agent::{
 };
 use commands::config::{get_config, save_config};
 use commands::mcp_process::get_gateway_status;
-use commands::skills::{delete_skill, get_skill, list_skills, save_skill};
+use commands::skills::{
+    create_skill_directory, delete_skill, delete_skill_file, get_skill, list_skill_files,
+    list_skills, read_skill_file, save_skill, save_skill_file,
+};
 use std::sync::Mutex;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -20,6 +23,11 @@ pub fn run() {
             get_skill,
             save_skill,
             delete_skill,
+            list_skill_files,
+            read_skill_file,
+            save_skill_file,
+            delete_skill_file,
+            create_skill_directory,
             get_gateway_status,
             start_agent_bridge,
             stop_agent_bridge,

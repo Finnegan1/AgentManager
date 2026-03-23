@@ -7,7 +7,13 @@ export type {
   DownstreamServerConfig,
 } from "./mcp-server-config.js";
 
-export type { SkillMetadata, Skill } from "./skill.js";
+export type {
+  BaseSkillMetadata,
+  ClaudeSkillMetadata,
+  SkillMetadata,
+  SkillFileInfo,
+  Skill,
+} from "./skill.js";
 
 export type {
   SkillManagementConfig,

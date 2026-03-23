@@ -40,15 +40,24 @@ export function SkillList() {
     try {
       const skill = await loadSkill(id);
       // Reconstruct the full file content with frontmatter
-      const frontmatter = `---
-name: "${skill.metadata.name}"
-tags: [${skill.metadata.tags.map((t) => `"${t}"`).join(", ")}]
-description: "${skill.metadata.description}"
-version: "${skill.metadata.version}"
-author: "${skill.metadata.author}"
-created: "${skill.metadata.created}"
-updated: "${new Date().toISOString().split("T")[0]}"
----`;
+      const lines: string[] = ["---"];
+      lines.push(`name: "${skill.metadata.name}"`);
+      lines.push(`description: "${skill.metadata.description}"`);
+      lines.push(`tags: [${skill.metadata.tags.map((t) => `"${t}"`).join(", ")}]`);
+      lines.push(`version: "${skill.metadata.version}"`);
+      if (skill.metadata.author) lines.push(`author: "${skill.metadata.author}"`);
+      lines.push(`created: "${skill.metadata.created}"`);
+      lines.push(`updated: "${new Date().toISOString().split("T")[0]}"`);
+      // Claude Code-specific fields
+      if (skill.metadata.allowedTools) lines.push(`allowed-tools: "${skill.metadata.allowedTools}"`);
+      if (skill.metadata.disableModelInvocation !== undefined) lines.push(`disable-model-invocation: ${skill.metadata.disableModelInvocation}`);
+      if (skill.metadata.userInvocable !== undefined) lines.push(`user-invocable: ${skill.metadata.userInvocable}`);
+      if (skill.metadata.context) lines.push(`context: ${skill.metadata.context}`);
+      if (skill.metadata.agent) lines.push(`agent: ${skill.metadata.agent}`);
+      if (skill.metadata.model) lines.push(`model: ${skill.metadata.model}`);
+      if (skill.metadata.argumentHint) lines.push(`argument-hint: "${skill.metadata.argumentHint}"`);
+      lines.push("---");
+      const frontmatter = lines.join("\n");
       setEditingSkill({ id, content: `${frontmatter}\n\n${skill.content}` });
       setFormKey((k) => k + 1);
       setFormOpen(true);
@@ -168,11 +177,20 @@ updated: "${new Date().toISOString().split("T")[0]}"
                       {tag}
                     </Badge>
                   ))}
+                  {(skill.allowedTools || skill.disableModelInvocation || skill.context) && (
+                    <Badge variant="outline" className="text-xs">
+                      Claude Code
+                    </Badge>
+                  )}
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                   <span>v{skill.version}</span>
-                  <span>·</span>
-                  <span>{skill.author}</span>
+                  {skill.author && (
+                    <>
+                      <span>·</span>
+                      <span>{skill.author}</span>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>

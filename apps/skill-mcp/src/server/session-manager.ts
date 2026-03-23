@@ -3,6 +3,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { randomUUID } from "node:crypto";
 import type { ProxyManager } from "../gateway/proxy-manager.js";
 import type { SkillManager } from "../skills/skill-manager.js";
+import type { SkillSymlinker } from "../skills/skill-symlink.js";
 import { SKILL_TOOLS } from "../tools/skill-tools.js";
 import { GATEWAY_TOOLS } from "../tools/gateway-tools.js";
 import { registerRequestHandlers } from "./register-handlers.js";
@@ -35,6 +36,7 @@ export class SessionManager {
     private globalProxy: ProxyManager,
     private skillManager: SkillManager,
     private projectPool: ProjectConnectionPool,
+    private symlinker?: SkillSymlinker,
   ) {}
 
   /** Get the number of active sessions */
@@ -76,7 +78,7 @@ export class SessionManager {
     );
 
     // Register handlers with global proxy only (project proxy added later)
-    registerRequestHandlers(server, this.globalProxy, null, this.skillManager);
+    registerRequestHandlers(server, this.globalProxy, null, this.skillManager, this.symlinker);
 
     // Set native tools on global proxy (idempotent)
     this.globalProxy.toolRegistry.setNativeTools([
@@ -171,6 +173,7 @@ export class SessionManager {
       this.globalProxy,
       projectProxy,
       this.skillManager,
+      this.symlinker,
     );
 
     // Notify the client that the tool list has changed

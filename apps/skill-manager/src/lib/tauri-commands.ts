@@ -56,11 +56,26 @@ export interface SkillMetadata {
   author: string;
   created: string;
   updated: string;
+  // Claude Code-specific fields (optional)
+  allowedTools?: string;
+  disableModelInvocation?: boolean;
+  userInvocable?: boolean;
+  context?: string;
+  agent?: string;
+  model?: string;
+  argumentHint?: string;
+}
+
+export interface SkillFileInfo {
+  relativePath: string;
+  isDirectory: boolean;
+  size: number;
 }
 
 export interface SkillContent {
   metadata: SkillMetadata;
   content: string;
+  files: SkillFileInfo[];
 }
 
 export interface ServerConnectionStatus {
@@ -107,6 +122,34 @@ export async function saveSkill(
 
 export async function deleteSkill(name: string): Promise<void> {
   return invoke("delete_skill", { name });
+}
+
+export async function listSkillFiles(
+  name: string,
+): Promise<SkillFileInfo[]> {
+  return invoke<SkillFileInfo[]>("list_skill_files", { name });
+}
+
+export async function saveSkillFile(
+  name: string,
+  relativePath: string,
+  content: string,
+): Promise<void> {
+  return invoke("save_skill_file", { name, relativePath, content });
+}
+
+export async function deleteSkillFile(
+  name: string,
+  relativePath: string,
+): Promise<void> {
+  return invoke("delete_skill_file", { name, relativePath });
+}
+
+export async function createSkillDirectory(
+  name: string,
+  relativePath: string,
+): Promise<void> {
+  return invoke("create_skill_directory", { name, relativePath });
 }
 
 export async function getGatewayStatus(): Promise<GatewayStatus> {
