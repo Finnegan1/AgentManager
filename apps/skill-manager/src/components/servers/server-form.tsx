@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import type { DownstreamServerConfig, TransportConfig } from "@/lib/tauri-commands";
+import type { DownstreamServerConfig, TransportConfig, ServerScope } from "@/lib/tauri-commands";
 
 interface ServerFormProps {
   open: boolean;
@@ -38,6 +38,7 @@ export function ServerForm({
   const [serverKey, setServerKey] = useState(initialKey ?? "");
   const [name, setName] = useState(initialConfig?.name ?? "");
   const [enabled, setEnabled] = useState(initialConfig?.enabled ?? true);
+  const [scope, setScope] = useState<ServerScope>(initialConfig?.scope ?? "global");
   const [transportType, setTransportType] = useState<TransportConfig["type"]>(
     initialConfig?.transport.type ?? "stdio",
   );
@@ -161,7 +162,7 @@ export function ServerForm({
 
     try {
       setSaving(true);
-      await onSave(serverKey.trim(), { name: name.trim(), enabled, transport });
+      await onSave(serverKey.trim(), { name: name.trim(), enabled, scope, transport });
       onOpenChange(false);
     } catch (err) {
       console.error("Failed to save server:", err);
@@ -210,6 +211,27 @@ export function ServerForm({
           <div className="flex items-center gap-3">
             <Switch checked={enabled} onCheckedChange={setEnabled} />
             <Label>Aktiviert</Label>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Scope</Label>
+            <Select
+              value={scope}
+              onValueChange={(v) => setScope(v as ServerScope)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="global">Global</SelectItem>
+                <SelectItem value="project">Project</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {scope === "global"
+                ? "Server wird einmal gestartet und für alle Sessions geteilt."
+                : "Server wird pro Projektverzeichnis gestartet. Das Arbeitsverzeichnis wird auf das Projektverzeichnis gesetzt."}
+            </p>
           </div>
 
           <div className="space-y-2">

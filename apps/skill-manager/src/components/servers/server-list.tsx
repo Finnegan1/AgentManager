@@ -102,6 +102,9 @@ export function ServerList() {
                     <Badge variant="outline">
                       {serverConfig.transport.type}
                     </Badge>
+                    <Badge variant="outline">
+                      {serverConfig.scope ?? "global"}
+                    </Badge>
 
                     {!serverConfig.enabled ? (
                       <Badge variant="secondary">Deaktiviert</Badge>

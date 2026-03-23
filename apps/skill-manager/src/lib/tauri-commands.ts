@@ -27,9 +27,12 @@ export type TransportConfig =
   | SseTransportConfig
   | StreamableHttpTransportConfig;
 
+export type ServerScope = "global" | "project";
+
 export interface DownstreamServerConfig {
   name: string;
   enabled: boolean;
+  scope?: ServerScope;
   transport: TransportConfig;
 }
 
