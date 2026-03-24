@@ -15,7 +15,6 @@ This is a **Turborepo** monorepo using **Bun** as the package manager.
 ### Packages
 
 - **`shared-types`** — Shared TypeScript types (skills, config, server definitions)
-- **`ui`** — Shared React component library
 - **`eslint-config`** — Shared ESLint configurations
 - **`typescript-config`** — Shared `tsconfig.json` presets
 
