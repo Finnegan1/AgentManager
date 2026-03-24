@@ -84,7 +84,7 @@ React frontend calls saveSkill(id, content)
 Tauri IPC → Rust backend
     │
     ▼
-Rust writes ~/.skill-management/skills/{id}.md
+Rust writes ~/.agent-manager/skills/{id}.md
     │
     ▼
 Frontend reloads skill list
@@ -106,7 +106,7 @@ React frontend calls saveConfig(config)
 Tauri IPC → Rust backend
     │
     ▼
-Rust atomically writes ~/.skill-management/config.json
+Rust atomically writes ~/.agent-manager/config.json
     │                    (write to temp file, then rename)
     ▼
 Gateway's ConfigStore detects file change (fs.watch)
@@ -183,7 +183,7 @@ MCP Gateway HTTP Daemon (running on port 24842)
     │
     │  Every 5 seconds:
     ▼
-Writes ~/.skill-management/status.json
+Writes ~/.agent-manager/status.json
     │  {
     │    "pid": 12345,
     │    "startedAt": "2026-03-22T10:00:00Z",

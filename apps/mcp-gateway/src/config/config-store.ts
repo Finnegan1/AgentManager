@@ -5,7 +5,7 @@ import * as os from "node:os";
 import { SkillManagementConfigSchema } from "./config-schema.js";
 import type { SkillManagementConfig } from "@repo/shared-types";
 
-const CONFIG_DIR = path.join(os.homedir(), ".skill-management");
+const CONFIG_DIR = path.join(os.homedir(), ".agent-manager");
 const CONFIG_PATH = path.join(CONFIG_DIR, "config.json");
 const SKILLS_DIR = path.join(CONFIG_DIR, "skills");
 
@@ -15,7 +15,7 @@ export interface ConfigStoreEvents {
 }
 
 /**
- * Reads, validates, and watches the skill-management config file.
+ * Reads, validates, and watches the agent-manager config file.
  * Emits 'changed' events when the config file is modified.
  */
 export class ConfigStore extends EventEmitter<ConfigStoreEvents> {

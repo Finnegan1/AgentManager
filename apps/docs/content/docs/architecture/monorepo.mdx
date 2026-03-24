@@ -8,10 +8,10 @@ Skill Gateway uses a **Turborepo** monorepo with **Bun** as the package manager.
 ## Directory Layout
 
 ```
-skill-management/
+agent-manager/
 ├── apps/
-│   ├── skill-manager/       # Tauri desktop app (React + Rust)
-│   ├── skill-mcp/           # MCP gateway server (Node.js/Bun)
+│   ├── agent-manager/       # Tauri desktop app (React + Rust)
+│   ├── mcp-gateway/           # MCP gateway server (Node.js/Bun)
 │   └── docs/                # Documentation site (Fumadocs)
 ├── packages/
 │   ├── shared-types/        # TypeScript type definitions
@@ -25,7 +25,7 @@ skill-management/
 
 ## Applications
 
-### `apps/skill-manager/`
+### `apps/agent-manager/`
 
 The Tauri desktop application.
 
@@ -37,7 +37,7 @@ The Tauri desktop application.
 
 The frontend lives in `src/` and the Rust backend in `src-tauri/`.
 
-### `apps/skill-mcp/`
+### `apps/mcp-gateway/`
 
 The MCP gateway HTTP daemon.
 
@@ -66,13 +66,13 @@ This documentation site.
 TypeScript type definitions used across all applications:
 
 - `Skill`, `SkillMetadata` — skill data types
-- `SkillManagementConfig` — configuration structure
+- `AgentManagerConfig` — configuration structure
 - `DownstreamServerConfig`, `TransportConfig`, `ServerScope` — server connection types
 - `GatewayStatus` — runtime status types (PID, port, URL, active sessions, server states)
 
 ### `packages/ui/`
 
-Shared React UI components. The desktop app primarily uses its own shadcn/ui component library in `apps/skill-manager/src/components/ui/`.
+Shared React UI components. The desktop app primarily uses its own shadcn/ui component library in `apps/agent-manager/src/components/ui/`.
 
 ### `packages/eslint-config/` and `packages/typescript-config/`
 
@@ -86,4 +86,4 @@ Turborepo orchestrates builds with task dependencies defined in `turbo.json`. Ke
 - **`dev`** — Starts development servers
 - **`lint`** — Runs ESLint across the workspace
 
-Dependencies between packages are resolved automatically — for example, `apps/skill-manager` depends on `packages/shared-types`, so Turbo ensures types are built first.
+Dependencies between packages are resolved automatically — for example, `apps/agent-manager` depends on `packages/shared-types`, so Turbo ensures types are built first.

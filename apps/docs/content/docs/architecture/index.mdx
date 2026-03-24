@@ -50,7 +50,7 @@ Skill Gateway is composed of three main components that work together through sh
        │                   │   │   │
        ▼                   ▼   ▼   ▼
 ┌─────────────────────────────┐    ┌───┐ ┌───┐ ┌───┐
-│  ~/.skill-management/       │    │MCP│ │MCP│ │MCP│
+│  ~/.agent-manager/       │    │MCP│ │MCP│ │MCP│
 │  ├── config.json            │    │ A │ │ B │ │ C │
 │  ├── skills/*.md            │    └───┘ └───┘ └───┘
 │  └── status.json            │    Downstream Servers
@@ -60,14 +60,14 @@ Skill Gateway is composed of three main components that work together through sh
                │
                ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                  Skill Manager Desktop App                  │
+│                  Agent Manager Desktop App                   │
 │                  (Tauri: React + Rust)                      │
 │                                                             │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │  React Frontend                                      │  │
 │  │  • Dashboard (status overview)                       │  │
 │  │  • Server Management (add/edit/toggle servers)       │  │
-│  │  • Skill Management (create/edit/search/delete)      │  │
+│  │  • Agent Manager (create/edit/search/delete)          │  │
 │  └──────────────────────┬───────────────────────────────┘  │
 │                         │ Tauri IPC                         │
 │  ┌──────────────────────▼───────────────────────────────┐  │
@@ -81,13 +81,13 @@ Skill Gateway is composed of three main components that work together through sh
 
 ## Component Responsibilities
 
-### MCP Gateway HTTP Daemon (`apps/skill-mcp/`)
+### MCP Gateway HTTP Daemon (`apps/mcp-gateway/`)
 
 A Node.js/Bun HTTP daemon that runs on `127.0.0.1:24842`:
 
 - **Accepts HTTP connections** from multiple AI clients simultaneously
 - **Manages sessions** — each client gets its own `Server` + `StreamableHTTPServerTransport` pair
-- **Serves skills** from `~/.skill-management/skills/` via native tools
+- **Serves skills** from `~/.agent-manager/skills/` via native tools
 - **Proxies downstream servers** — connects to all enabled servers, namespaces their capabilities, and forwards requests
 - **Splits by scope** — global-scope servers are shared; project-scope servers are managed per project root
 - **Watches configuration** — picks up changes to `config.json` without restart
@@ -104,7 +104,7 @@ Key internal components:
 | **ConfigStore** | Watches and validates `config.json`, emits change events |
 | **SkillManager** | Reads and searches skill files from disk |
 
-### Desktop App (`apps/skill-manager/`)
+### Desktop App (`apps/agent-manager/`)
 
 A Tauri application with a React frontend and Rust backend:
 
@@ -113,7 +113,7 @@ A Tauri application with a React frontend and Rust backend:
 - **Communicates via Tauri IPC** — the frontend calls typed Rust commands
 - **Polls gateway status** by reading `status.json` every 5 seconds
 
-### Shared Files on Disk (`~/.skill-management/`)
+### Shared Files on Disk (`~/.agent-manager/`)
 
 The gateway and desktop app don't communicate directly. Instead, they share three types of files:
 

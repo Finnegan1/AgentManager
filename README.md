@@ -8,8 +8,8 @@ This is a **Turborepo** monorepo using **Bun** as the package manager.
 
 ### Apps
 
-- **`skill-mcp`** — MCP gateway server that serves skills and proxies downstream MCP servers. Supports stdio, SSE, and HTTP streaming transports.
-- **`skill-manager`** — Native desktop app (Tauri + React) for managing skills, servers, and monitoring gateway status.
+- **`mcp-gateway`** — MCP gateway server that serves skills and proxies downstream MCP servers. Supports stdio, SSE, and HTTP streaming transports.
+- **`agent-manager`** — Native desktop app (Tauri + React) for managing skills, servers, and monitoring gateway status.
 - **`docs`** — Documentation site built with TanStack Start and Fumadocs.
 
 ### Packages
@@ -44,8 +44,8 @@ turbo dev
 Or run a specific app:
 
 ```sh
-turbo dev --filter=skill-mcp
-turbo dev --filter=skill-manager
+turbo dev --filter=mcp-gateway
+turbo dev --filter=agent-manager
 turbo dev --filter=docs
 ```
 
@@ -68,13 +68,13 @@ bun run format
 ```
 AI Client (e.g. Claude Code)
     ↓ MCP protocol (stdio)
-MCP Gateway Server (skill-mcp)
-    ├─ Reads ~/.skill-management/config.json (hot-reload)
-    ├─ Reads ~/.skill-management/skills/*.md
-    ├─ Writes ~/.skill-management/status.json
+MCP Gateway Server (mcp-gateway)
+    ├─ Reads ~/.agent-manager/config.json (hot-reload)
+    ├─ Reads ~/.agent-manager/skills/*.md
+    ├─ Writes ~/.agent-manager/status.json
     └─ Proxies downstream MCP servers
 
-Desktop App (skill-manager)
+Desktop App (agent-manager)
     ├─ Reads config, skills, and status files
     ├─ Writes config and skill files via Tauri
     └─ UI for managing everything
@@ -86,7 +86,7 @@ Communication between the gateway and the desktop app is file-based — no direc
 
 - **Skills as Markdown** — YAML frontmatter for metadata, plain markdown for content
 - **MCP Gateway** — Proxy tools, resources, and prompts from multiple downstream servers with automatic namespacing
-- **Hot-Reload Config** — Changes to `~/.skill-management/config.json` are picked up without restarting the gateway
+- **Hot-Reload Config** — Changes to `~/.agent-manager/config.json` are picked up without restarting the gateway
 - **Native Desktop App** — Dashboard, server management, skill editor with CodeMirror and Vim keybindings
 - **Full Documentation** — Searchable docs site covering concepts, architecture, and configuration
 

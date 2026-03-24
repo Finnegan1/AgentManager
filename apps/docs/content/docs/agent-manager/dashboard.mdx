@@ -3,7 +3,7 @@ title: Dashboard
 description: The dashboard page — gateway status, server connections, and system metrics at a glance.
 ---
 
-The **Dashboard** is the landing page of the Skill Manager app. It gives you a quick overview of the entire system.
+The **Dashboard** is the landing page of the Agent Manager app. It gives you a quick overview of the entire system.
 
 ## Gateway Status
 
@@ -12,7 +12,7 @@ At the top of the dashboard, a status card shows whether the MCP gateway is curr
 - **Running** (green badge) — The gateway HTTP daemon is active, with its PID, start time, port, URL, and active session count displayed
 - **Stopped** (red badge) — No gateway process detected
 
-The app determines this by reading `~/.skill-management/status.json` and verifying the reported PID is still a running process.
+The app determines this by reading `~/.agent-manager/status.json` and verifying the reported PID is still a running process.
 
 ## Metrics Overview
 

@@ -11,7 +11,7 @@ import { ProjectConnectionPool } from "./server/project-connection-pool.js";
 import { createHttpServer } from "./server/http-server.js";
 import type { GatewayStatus } from "@repo/shared-types";
 
-const STATUS_PATH = path.join(os.homedir(), ".skill-management", "status.json");
+const STATUS_PATH = path.join(os.homedir(), ".agent-manager", "status.json");
 const DEFAULT_PORT = 24842;
 const DEFAULT_HOST = "127.0.0.1";
 

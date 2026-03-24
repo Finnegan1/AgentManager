@@ -15,7 +15,7 @@ export interface SkillManagementConfig {
   servers: Record<string, DownstreamServerConfig>;
   /** Skill management settings */
   skills: {
-    /** Directory containing skill markdown files. Defaults to ~/.skill-management/skills/ */
+    /** Directory containing skill markdown files. Defaults to ~/.agent-manager/skills/ */
     directory: string;
   };
 }
@@ -54,7 +54,7 @@ export function createDefaultConfig(homeDir: string): SkillManagementConfig {
     },
     servers: {},
     skills: {
-      directory: `${homeDir}/.skill-management/skills`,
+      directory: `${homeDir}/.agent-manager/skills`,
     },
   };
 }

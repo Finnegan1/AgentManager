@@ -6,7 +6,7 @@ use std::path::PathBuf;
 fn status_path() -> PathBuf {
     dirs::home_dir()
         .expect("Could not find home directory")
-        .join(".skill-management")
+        .join(".agent-manager")
         .join("status.json")
 }
 

@@ -72,7 +72,7 @@ Skills can include optional Claude Code-specific frontmatter fields:
 Skills are stored as directories inside the skills directory, each containing a `SKILL.md` file:
 
 ```
-~/.skill-management/skills/
+~/.agent-manager/skills/
   typescript-best-practices/
     SKILL.md
   react-patterns/
@@ -86,7 +86,7 @@ Skills are stored as directories inside the skills directory, each containing a 
 The directory name becomes the **skill ID**. This ID is used in all API calls (`skills__get`, `skills__search`, etc.). Skill directories can contain additional subdirectories like `references/`, `scripts/`, or `assets/` for supporting files.
 
 <Callout>
-  The skills directory path defaults to `~/.skill-management/skills/` but can be changed in the [configuration](/docs/reference/config).
+  The skills directory path defaults to `~/.agent-manager/skills/` but can be changed in the [configuration](/docs/reference/config).
 </Callout>
 
 ## Claude Code Integration

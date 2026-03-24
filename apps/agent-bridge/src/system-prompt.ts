@@ -2,10 +2,10 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
-const CLAUDE_MD_CONTENT = `# Skill Management Assistant
+const CLAUDE_MD_CONTENT = `# Agent Manager Assistant
 
 You are helping the user manage their MCP (Model Context Protocol) servers and skills.
-Your working directory is ~/.skill-management/. Only modify files within this directory.
+Your working directory is ~/.agent-manager/. Only modify files within this directory.
 
 ## Config File: config.json
 
@@ -25,7 +25,7 @@ The main configuration file. Structure:
     }
   },
   "skills": {
-    "directory": "~/.skill-management/skills"
+    "directory": "~/.agent-manager/skills"
   }
 }
 \`\`\`
@@ -119,7 +119,7 @@ This avoids needing global installation.
 `;
 
 export function writeSystemPrompt(): string {
-  const skillMgmtDir = join(homedir(), ".skill-management");
+  const skillMgmtDir = join(homedir(), ".agent-manager");
   mkdirSync(skillMgmtDir, { recursive: true });
   const claudeMdPath = join(skillMgmtDir, "CLAUDE.md");
   writeFileSync(claudeMdPath, CLAUDE_MD_CONTENT, "utf-8");
@@ -127,5 +127,5 @@ export function writeSystemPrompt(): string {
 }
 
 export function getWorkingDirectory(): string {
-  return join(homedir(), ".skill-management");
+  return join(homedir(), ".agent-manager");
 }

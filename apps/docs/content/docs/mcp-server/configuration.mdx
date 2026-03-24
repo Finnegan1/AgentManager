@@ -3,12 +3,12 @@ title: Configuration
 description: How to configure the MCP gateway — config file format, server definitions, and runtime behavior.
 ---
 
-The gateway reads its configuration from `~/.skill-management/config.json`. This file is created automatically on first launch with sensible defaults.
+The gateway reads its configuration from `~/.agent-manager/config.json`. This file is created automatically on first launch with sensible defaults.
 
 ## Config File Location
 
 ```
-~/.skill-management/config.json
+~/.agent-manager/config.json
 ```
 
 The desktop app reads and writes this file. The gateway watches it for changes and applies them automatically.
@@ -68,7 +68,7 @@ The desktop app reads and writes this file. The gateway watches it for changes a
     }
   },
   "skills": {
-    "directory": "~/.skill-management/skills"
+    "directory": "~/.agent-manager/skills"
   }
 }
 ```
@@ -100,7 +100,7 @@ To connect your AI client to the gateway, configure it to use the HTTP endpoint.
 ```
 
 <Callout>
-  The gateway must be running before the client connects. Start it with `bun run dev:server` in the `apps/skill-mcp/` directory.
+  The gateway must be running before the client connects. Start it with `bun run dev:server` in the `apps/mcp-gateway/` directory.
 </Callout>
 
 ## Field Reference
@@ -131,7 +131,7 @@ When no config file exists, a default is created:
   },
   "servers": {},
   "skills": {
-    "directory": "~/.skill-management/skills"
+    "directory": "~/.agent-manager/skills"
   }
 }
 ```

@@ -264,7 +264,7 @@ raw URL: https://raw.githubusercontent.com/anthropics/claude-code/main/plugins/f
 4. User clicks "Install" on a skill
 5. App calls `GET https://registry.smithery.ai/skills/{namespace}/{slug}` to get `gitUrl`
 6. Convert `gitUrl` to GitHub raw URL, fetch `SKILL.md` content
-7. Convert to Skill Gateway frontmatter format (add/map YAML fields) and save to `~/.skill-management/skills/`
+7. Convert to Skill Gateway frontmatter format (add/map YAML fields) and save to `~/.agent-manager/skills/`
 8. Gateway auto-detects the new skill file via hot-reload
 
 ### One-Click Install Flow: MCP Servers

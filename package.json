@@ -1,5 +1,5 @@
 {
-  "name": "skill-management",
+  "name": "agent-manager",
   "private": true,
   "scripts": {
     "build": "turbo run build",

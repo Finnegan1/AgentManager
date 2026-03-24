@@ -8,7 +8,7 @@ This walkthrough takes you from zero to a working setup with a skill and a conne
 ## Step 1: Launch the App
 
 ```bash
-cd skills-mcp/skill-management/apps/skill-manager
+cd skills-mcp/agent-manager/apps/agent-manager
 bun run tauri dev
 ```
 
@@ -43,7 +43,7 @@ Enable `strict: true` in your `tsconfig.json` for maximum type safety.
 
 5. Click **Speichern** (Save)
 
-Your skill is now stored at `~/.skill-management/skills/typescript-best-practices/SKILL.md`, symlinked to `~/.claude/skills/`, and immediately available through the MCP gateway and Claude Code.
+Your skill is now stored at `~/.agent-manager/skills/typescript-best-practices/SKILL.md`, symlinked to `~/.claude/skills/`, and immediately available through the MCP gateway and Claude Code.
 
 <Callout>
   **Tip:** You can also install skills from the [skills.sh marketplace](https://skills.sh/). Click **Skill Marketplace** on the Skills page, copy an install command, and paste it into the app.
@@ -68,7 +68,7 @@ The server appears in your list. Toggle the **Aktiviert** (Enabled) switch to co
 First, start the gateway daemon in a terminal:
 
 ```bash
-cd skills-mcp/skill-management/apps/skill-mcp
+cd skills-mcp/agent-manager/apps/mcp-gateway
 bun run dev:server
 ```
 

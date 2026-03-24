@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "skill-manager",
+  "productName": "agent-manager",
   "version": "0.1.0",
-  "identifier": "com.finnegan.skill-manager",
+  "identifier": "com.finnegan.agent-manager",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "skill-manager",
+        "title": "Agent Manager",
         "width": 800,
         "height": 600
       }

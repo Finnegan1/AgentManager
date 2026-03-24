@@ -6,7 +6,7 @@ use std::path::PathBuf;
 fn config_dir() -> PathBuf {
     dirs::home_dir()
         .expect("Could not find home directory")
-        .join(".skill-management")
+        .join(".agent-manager")
 }
 
 fn config_path() -> PathBuf {

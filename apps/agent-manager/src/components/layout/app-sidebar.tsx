@@ -28,9 +28,8 @@ const navItems = [
 export function AppSidebar({ currentPage, onNavigate }: AppSidebarProps) {
   return (
     <Sidebar>
-      <SidebarHeader className="border-b px-6 py-4">
-        <h1 className="text-lg font-bold tracking-tight">Skill Gateway</h1>
-        <p className="text-xs text-muted-foreground">MCP Management</p>
+      <SidebarHeader className="border-b px-6 h-14 flex justify-center">
+        <h1 className="text-lg font-bold tracking-tight">Agent Manager</h1>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

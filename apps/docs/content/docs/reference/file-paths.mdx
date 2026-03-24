@@ -10,7 +10,7 @@ Skill Gateway stores all its data in a single directory on disk. This page docum
 All user data lives under:
 
 ```
-~/.skill-management/
+~/.agent-manager/
 ```
 
 This directory is created automatically on first launch.
@@ -18,7 +18,7 @@ This directory is created automatically on first launch.
 ## File Map
 
 ```
-~/.skill-management/
+~/.agent-manager/
 ├── config.json          # Main configuration file
 ├── status.json          # Gateway runtime status (auto-generated)
 └── skills/              # Skill directories
@@ -31,8 +31,8 @@ This directory is created automatically on first launch.
     └── ...
 
 ~/.claude/skills/        # Symlinks (auto-managed by gateway)
-    ├── skill-one -> ~/.skill-management/skills/skill-one
-    ├── skill-two -> ~/.skill-management/skills/skill-two
+    ├── skill-one -> ~/.agent-manager/skills/skill-one
+    ├── skill-two -> ~/.agent-manager/skills/skill-two
     └── ...
 ```
 
@@ -118,12 +118,12 @@ Symlinks are automatically managed by the gateway to make skills discoverable by
 For developers working on Skill Gateway itself:
 
 ```
-skill-management/
+agent-manager/
 ├── apps/
-│   ├── skill-manager/           # Desktop app
+│   ├── agent-manager/           # Desktop app
 │   │   ├── src/                 # React frontend
 │   │   └── src-tauri/           # Rust backend
-│   ├── skill-mcp/               # MCP gateway server
+│   ├── mcp-gateway/               # MCP gateway server
 │   │   └── src/                 # TypeScript source
 │   └── docs/                    # This documentation site
 │       └── content/docs/        # MDX content files

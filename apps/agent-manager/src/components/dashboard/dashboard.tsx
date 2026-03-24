@@ -27,7 +27,7 @@ export function Dashboard() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
         <p className="text-muted-foreground">
-          Ubersicht uber den Skill Gateway
+          Ubersicht uber den Agent Manager
         </p>
       </div>
 

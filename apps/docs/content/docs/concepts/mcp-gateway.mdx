@@ -95,7 +95,7 @@ Configure your AI client to connect to the gateway's HTTP endpoint. For Claude C
 ```
 
 <Callout>
-  The gateway must be running before your AI client connects. Start it with `bun run dev:server` in the `apps/skill-mcp/` directory.
+  The gateway must be running before your AI client connects. Start it with `bun run dev:server` in the `apps/mcp-gateway/` directory.
 </Callout>
 
 ## Namespacing
@@ -124,7 +124,7 @@ The gateway exposes five built-in tools that are always available, regardless of
 
 ## Hot-Reload
 
-The gateway watches the configuration file (`~/.skill-management/config.json`) for changes. When you add, remove, enable, disable, or modify a downstream server in the desktop app:
+The gateway watches the configuration file (`~/.agent-manager/config.json`) for changes. When you add, remove, enable, disable, or modify a downstream server in the desktop app:
 
 1. The config file is updated on disk
 2. The gateway's `ConfigStore` detects the change (debounced at 200ms)
