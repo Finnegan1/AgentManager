@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Toaster } from "@/components/ui/sonner";
 import { AppProvider } from "@/contexts/app-context";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ModeToggle } from "@/components/mode-toggle";
 import { AppSidebar, type Page } from "@/components/layout/app-sidebar";
 import { Dashboard } from "@/components/dashboard/dashboard";
 import { ServerList } from "@/components/servers/server-list";
@@ -21,6 +23,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
 
   return (
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
     <AppProvider>
       <TooltipProvider>
         <SidebarProvider>
@@ -32,6 +35,9 @@ function App() {
               <h1 className="text-sm font-semibold">
                 {PAGE_TITLES[currentPage]}
               </h1>
+              <div className="ml-auto">
+                <ModeToggle />
+              </div>
             </header>
             <main className="flex-1 overflow-auto p-6">
               {currentPage === "dashboard" && <Dashboard />}
@@ -44,6 +50,7 @@ function App() {
         <Toaster />
       </TooltipProvider>
     </AppProvider>
+    </ThemeProvider>
   );
 }
 
