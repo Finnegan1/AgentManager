@@ -1,10 +1,11 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/')({
   component: Home,
 });
 
 function Home() {
+  const basepath = useRouter().basepath;
   return (
     <div className="landing">
       <nav className="landing-nav">
@@ -39,12 +40,12 @@ function Home() {
 
         <div className="landing-img-wrap">
           <img
-            src="/screenshot-dark.png"
+            src={`${basepath}screenshot-dark.png`}
             alt="Agent Manager"
             className="landing-img landing-img-dark"
           />
           <img
-            src="/screenshot-light.png"
+            src={`${basepath}screenshot-light.png`}
             alt="Agent Manager"
             className="landing-img landing-img-light"
           />

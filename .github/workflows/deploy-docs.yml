@@ -30,6 +30,14 @@ jobs:
         env:
           GITHUB_PAGES: true
 
+      - name: Prepare for GitHub Pages
+        run: |
+          cd apps/docs/.output/public
+          touch .nojekyll
+          cp _shell.html 404.html
+          # Copy shell as index.html if root wasn't prerendered
+          [ -f index.html ] || cp _shell.html index.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
