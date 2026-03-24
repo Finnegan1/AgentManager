@@ -1,3 +1,298 @@
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
+
+/* ── Landing Page ─────────────────────────────────────── */
+
+@keyframes landing-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: calc(100vh - 64px);
+  overflow: hidden;
+}
+
+/* Dot grid background */
+.landing-grid {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 70% 50% at 50% 0%, black 20%, transparent 100%);
+}
+
+:is(.light, [data-theme='light']) .landing-grid {
+  background-image: radial-gradient(circle, rgb(0 0 0 / 0.06) 1px, transparent 1px);
+}
+
+/* Soft glow orb */
+.landing-glow {
+  pointer-events: none;
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  translate: -50% 0;
+  width: 600px;
+  height: 400px;
+  border-radius: 9999px;
+  background: radial-gradient(ellipse, rgb(99 139 255 / 0.12) 0%, transparent 70%);
+  filter: blur(60px);
+}
+
+:is(.light, [data-theme='light']) .landing-glow {
+  background: radial-gradient(ellipse, rgb(99 139 255 / 0.08) 0%, transparent 70%);
+}
+
+/* Hero section */
+.landing-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 80px 24px 64px;
+  max-width: 720px;
+}
+
+@media (min-width: 640px) {
+  .landing-hero {
+    padding-top: 120px;
+    padding-bottom: 80px;
+  }
+}
+
+/* Badge */
+.landing-badge {
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(130 160 255);
+  border: 1px solid rgb(130 160 255 / 0.2);
+  background: rgb(130 160 255 / 0.06);
+  padding: 6px 16px;
+  border-radius: 999px;
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: landing-fade-up 0.6s ease-out forwards;
+}
+
+:is(.light, [data-theme='light']) .landing-badge {
+  color: rgb(60 90 200);
+  border-color: rgb(60 90 200 / 0.2);
+  background: rgb(60 90 200 / 0.06);
+}
+
+/* Headline */
+.landing-headline {
+  font-size: clamp(2.4rem, 6vw, 3.8rem);
+  font-weight: 750;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--color-fd-foreground);
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: landing-fade-up 0.6s ease-out forwards;
+}
+
+.landing-headline-accent {
+  background: linear-gradient(135deg, rgb(130 160 255), rgb(180 130 255));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Subtitle */
+.landing-sub {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--color-fd-muted-foreground);
+  max-width: 520px;
+  margin-bottom: 40px;
+  opacity: 0;
+  animation: landing-fade-up 0.6s ease-out forwards;
+}
+
+/* CTA row */
+.landing-cta-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  opacity: 0;
+  animation: landing-fade-up 0.6s ease-out forwards;
+}
+
+.landing-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background: rgb(130 160 255);
+  color: rgb(10 10 20);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.landing-cta:hover {
+  background: rgb(150 175 255);
+  box-shadow: 0 0 24px rgb(130 160 255 / 0.3);
+}
+
+.landing-cta-arrow {
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.landing-cta:hover .landing-cta-arrow {
+  transform: translateX(3px);
+}
+
+.landing-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 10px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  color: var(--color-fd-muted-foreground);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.landing-cta-secondary:hover {
+  border-color: rgb(255 255 255 / 0.2);
+  color: var(--color-fd-foreground);
+  background: rgb(255 255 255 / 0.04);
+}
+
+:is(.light, [data-theme='light']) .landing-cta-secondary {
+  border-color: rgb(0 0 0 / 0.12);
+}
+
+:is(.light, [data-theme='light']) .landing-cta-secondary:hover {
+  border-color: rgb(0 0 0 / 0.2);
+  background: rgb(0 0 0 / 0.03);
+}
+
+/* Features grid */
+.landing-features {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  width: 100%;
+  max-width: 880px;
+  padding: 0 24px 80px;
+  background: transparent;
+}
+
+@media (min-width: 640px) {
+  .landing-features {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 860px) {
+  .landing-features {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.landing-feature-card {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 24px;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 14px;
+  margin: 6px;
+  transition: all 0.25s ease;
+  opacity: 0;
+  animation: landing-fade-up 0.6s ease-out forwards;
+}
+
+.landing-feature-card:hover {
+  border-color: rgb(130 160 255 / 0.2);
+  background: rgb(130 160 255 / 0.03);
+}
+
+:is(.light, [data-theme='light']) .landing-feature-card {
+  border-color: rgb(0 0 0 / 0.08);
+}
+
+:is(.light, [data-theme='light']) .landing-feature-card:hover {
+  border-color: rgb(60 90 200 / 0.2);
+  background: rgb(60 90 200 / 0.03);
+}
+
+.landing-feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgb(130 160 255 / 0.1);
+  color: rgb(130 160 255);
+  margin-bottom: 16px;
+}
+
+:is(.light, [data-theme='light']) .landing-feature-icon {
+  background: rgb(60 90 200 / 0.08);
+  color: rgb(60 90 200);
+}
+
+.landing-feature-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-fd-foreground);
+  margin-bottom: 8px;
+}
+
+.landing-feature-desc {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--color-fd-muted-foreground);
+}
+
+/* Footer */
+.landing-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px;
+  font-size: 0.82rem;
+  color: var(--color-fd-muted-foreground);
+  opacity: 0;
+  animation: landing-fade-up 0.6s ease-out forwards;
+}
+
+.landing-footer a {
+  color: var(--color-fd-muted-foreground);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.landing-footer a:hover {
+  color: var(--color-fd-foreground);
+}
+
+.landing-footer-sep {
+  opacity: 0.3;
+}
