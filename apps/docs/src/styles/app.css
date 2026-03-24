@@ -4,6 +4,10 @@
 
 /* ── Landing ──────────────────────────────────────────── */
 
+html:has(.landing) {
+  background: #0a0a0a;
+}
+
 .landing {
   background: #0a0a0a;
   color: #fafafa;
@@ -75,24 +79,6 @@
   letter-spacing: -0.035em;
   color: #fafafa;
   margin: 0 0 40px;
-}
-
-.landing-dl {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 32px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  border-radius: 9999px;
-  background: #fafafa;
-  color: #0a0a0a;
-  text-decoration: none;
-  transition: opacity 0.15s;
-}
-
-.landing-dl:hover {
-  opacity: 0.85;
 }
 
 .landing-soon {

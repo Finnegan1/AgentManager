@@ -1,11 +1,11 @@
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/')({
   component: Home,
 });
 
 function Home() {
-  const basepath = useRouter().basepath;
+  const base = import.meta.env.BASE_URL;
   return (
     <div className="landing">
       <nav className="landing-nav">
@@ -29,23 +29,16 @@ function Home() {
           your AI tools.
         </h1>
 
-        <Link
-          to="/docs/$"
-          params={{ _splat: '' }}
-          className="landing-dl"
-        >
-          Download for macOS
-        </Link>
         <p className="landing-soon">Available soon</p>
 
         <div className="landing-img-wrap">
           <img
-            src={`${basepath}screenshot-dark.png`}
+            src={`${base}screenshot-dark.png`}
             alt="Agent Manager"
             className="landing-img landing-img-dark"
           />
           <img
-            src={`${basepath}screenshot-light.png`}
+            src={`${base}screenshot-light.png`}
             alt="Agent Manager"
             className="landing-img landing-img-light"
           />
