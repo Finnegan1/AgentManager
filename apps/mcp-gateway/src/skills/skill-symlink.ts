@@ -8,7 +8,7 @@ const CLAUDE_SKILLS_DIR = path.join(os.homedir(), ".claude", "skills");
 /**
  * Manages symlinks from ~/.claude/skills/<name> → source skills directory.
  *
- * This allows Claude Code to auto-discover skills created in the Skill Gateway.
+ * This allows Claude Code to auto-discover skills created in Agent Manager.
  * Only creates/removes symlinks — never touches non-symlink entries in the
  * target directory (user may have manually created skills there).
  */

@@ -3,7 +3,7 @@ title: MCP Gateway
 description: How the gateway proxies multiple MCP servers through a single unified HTTP endpoint.
 ---
 
-The **MCP gateway** is the heart of Skill Gateway. It's a centralized HTTP daemon that aggregates multiple downstream MCP servers and your local skill library into a single connection point for your AI clients.
+The **MCP gateway** is the heart of Agent Manager. It's a centralized HTTP daemon that aggregates multiple downstream MCP servers and your local skill library into a single connection point for your AI clients.
 
 ## The Problem It Solves
 
@@ -20,7 +20,7 @@ AI Client C (e.g. Claude in /project-a)  ──HTTP──┘
                                                    │
                                                    ▼
 ┌──────────────────────────────────────────────────────────┐
-│             Skill Gateway HTTP Daemon                     │
+│             Agent Manager HTTP Daemon                     │
 │             http://127.0.0.1:24842/mcp                    │
 │                                                          │
 │  ┌──────────────────────────────────────────────────┐    │

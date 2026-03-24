@@ -1,12 +1,12 @@
 # MCP Skill Marketplace Research
 
-> Research conducted 2026-03-23 — exploring existing MCP marketplaces and how to integrate them into Skill Gateway.
+> Research conducted 2026-03-23 — exploring existing MCP marketplaces and how to integrate them into Agent Manager.
 
 ## Landscape Overview
 
-There are **13+ marketplaces** in the MCP ecosystem, spanning two categories that map directly to what Skill Gateway manages:
+There are **13+ marketplaces** in the MCP ecosystem, spanning two categories that map directly to what Agent Manager manages:
 
-| Skill Gateway Concept | Marketplace Equivalent |
+| Agent Manager Concept | Marketplace Equivalent |
 |---|---|
 | **Skills** (markdown files with YAML frontmatter) | **Smithery Skills** (128k+ skills, markdown-based `SKILL.md`) |
 | **MCP Servers** (downstream connections proxied through gateway) | **Official MCP Registry**, **Smithery MCPs**, **Docker MCP Catalog** |
@@ -226,7 +226,7 @@ raw URL: https://raw.githubusercontent.com/anthropics/claude-code/main/plugins/f
 
 ```
 ┌─────────────────────────────────────────────┐
-│          Skill Gateway Desktop App           │
+│          Agent Manager Desktop App           │
 │                                              │
 │  ┌───────────────┐  ┌────────────────────┐  │
 │  │  Skills Tab    │  │   Servers Tab      │  │
@@ -264,7 +264,7 @@ raw URL: https://raw.githubusercontent.com/anthropics/claude-code/main/plugins/f
 4. User clicks "Install" on a skill
 5. App calls `GET https://registry.smithery.ai/skills/{namespace}/{slug}` to get `gitUrl`
 6. Convert `gitUrl` to GitHub raw URL, fetch `SKILL.md` content
-7. Convert to Skill Gateway frontmatter format (add/map YAML fields) and save to `~/.agent-manager/skills/`
+7. Convert to Agent Manager frontmatter format (add/map YAML fields) and save to `~/.agent-manager/skills/`
 8. Gateway auto-detects the new skill file via hot-reload
 
 ### One-Click Install Flow: MCP Servers
@@ -280,9 +280,9 @@ raw URL: https://raw.githubusercontent.com/anthropics/claude-code/main/plugins/f
 
 ### Skill Format Mapping
 
-Smithery `SKILL.md` → Skill Gateway format:
+Smithery `SKILL.md` → Agent Manager format:
 
-| Smithery Field | Skill Gateway Frontmatter |
+| Smithery Field | Agent Manager Frontmatter |
 |---|---|
 | `displayName` | `name` |
 | `description` | `description` |
@@ -302,4 +302,4 @@ Smithery `SKILL.md` → Skill Gateway format:
 - **Rate limits**: GitHub raw API has rate limits for unauthenticated requests (60/hour). Consider caching or optional GitHub token support.
 - **MCPB bundles** are the emerging standard for one-click MCP server packaging (ZIP with `manifest.json`). Consider supporting them for future-proofing.
 - **Smithery Connect** offers managed remote MCP server hosting — could enable "one-click remote connect" without any local installation
-- The Skill Gateway's skill format (YAML frontmatter + markdown) is very close to Smithery's `SKILL.md` format — minimal conversion needed
+- The Agent Manager's skill format (YAML frontmatter + markdown) is very close to Smithery's `SKILL.md` format — minimal conversion needed

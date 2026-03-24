@@ -187,7 +187,7 @@ async function main() {
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 
-  console.error(`Skill Gateway MCP server started`);
+  console.error(`Agent Manager MCP server started`);
   console.error(`  URL: ${url}`);
   console.error(`  Port: ${port}`);
   console.error(`  Host: ${hostname}`);

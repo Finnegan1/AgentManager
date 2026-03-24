@@ -1,6 +1,8 @@
-# Skill Gateway
+# Agent Manager
 
 A unified MCP (Model Context Protocol) gateway and skill management system. Manage reusable AI knowledge as markdown files, proxy multiple MCP servers through a single endpoint, and configure everything from a native desktop app.
+
+![Agent Manager – Dark Mode](apps/docs/public/screenshot-dark.png)
 
 ## What's Inside
 
