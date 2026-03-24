@@ -6,6 +6,7 @@ import mdx from 'fumadocs-mdx/vite';
 import { nitro } from 'nitro/vite';
 
 export default defineConfig({
+  base: process.env.GITHUB_PAGES ? '/AgentManager/' : '/',
   server: {
     port: 3000,
   },
@@ -38,7 +39,9 @@ export default defineConfig({
     }),
     react(),
     // please see https://tanstack.com/start/latest/docs/framework/react/guide/hosting#nitro for guides on hosting
-    nitro(),
+    nitro({
+      preset: 'github-pages',
+    }),
   ],
   resolve: {
     tsconfigPaths: true,

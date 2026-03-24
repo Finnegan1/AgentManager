@@ -1,117 +1,100 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { HomeLayout } from 'fumadocs-ui/layouts/home';
-import { baseOptions } from '@/lib/layout.shared';
-import { Network, Monitor, Sparkles, Zap } from 'lucide-react';
 
 export const Route = createFileRoute('/')({
   component: Home,
 });
 
-const features = [
-  {
-    icon: Network,
-    title: 'Unified Gateway',
-    description:
-      'Proxy multiple MCP servers through a single endpoint. One connection, all your tools.',
-  },
-  {
-    icon: Monitor,
-    title: 'Desktop App',
-    description:
-      'Native Tauri application to manage servers, skills, and configuration visually.',
-  },
-  {
-    icon: Sparkles,
-    title: 'Skills Marketplace',
-    description:
-      'Discover, install, and share AI skills as portable markdown definitions.',
-  },
-  {
-    icon: Zap,
-    title: 'Hot-Reload Config',
-    description:
-      'Instant configuration updates. Change settings without restarting your servers.',
-  },
-];
-
 function Home() {
   return (
-    <HomeLayout {...baseOptions()}>
-      <div className="landing-page">
-        {/* Background grid */}
-        <div className="landing-grid" />
+    <div className="landing">
+      <nav className="landing-nav">
+        <Link to="/" className="landing-logo">
+          Agent Manager
+        </Link>
+        <a
+          href="https://github.com/Finnegan1/AgentManager"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="landing-nav-link"
+        >
+          GitHub ↗
+        </a>
+      </nav>
 
-        {/* Glow orb */}
-        <div className="landing-glow" />
+      <main className="landing-main">
+        <h1 className="landing-h1">
+          One gateway for all
+          <br />
+          your AI tools.
+        </h1>
 
-        {/* Hero */}
-        <section className="landing-hero">
-          <p className="landing-badge" style={{ animationDelay: '0ms' }}>
-            Open Source MCP Framework
+        <Link
+          to="/docs/$"
+          params={{ _splat: '' }}
+          className="landing-dl"
+        >
+          Download for macOS
+        </Link>
+        <p className="landing-soon">Available soon</p>
+
+        <div className="landing-img-wrap">
+          <img
+            src="/screenshot-dark.png"
+            alt="Agent Manager"
+            className="landing-img landing-img-dark"
+          />
+          <img
+            src="/screenshot-light.png"
+            alt="Agent Manager"
+            className="landing-img landing-img-light"
+          />
+        </div>
+      </main>
+
+      <section className="landing-info">
+        <div className="landing-info-block">
+          <h2>Unified MCP Gateway</h2>
+          <p>
+            Connect multiple MCP servers through a single endpoint. Your agents
+            see one connection — behind it, every tool they need.
           </p>
-          <h1 className="landing-headline" style={{ animationDelay: '80ms' }}>
-            The simplest way to
-            <br />
-            <span className="landing-headline-accent">manage AI skills.</span>
-          </h1>
-          <p className="landing-sub" style={{ animationDelay: '160ms' }}>
-            Skill Gateway unifies multiple MCP servers behind a single endpoint,
-            <br className="hidden sm:block" />
-            so your agents get every tool they need through one connection.
+        </div>
+        <div className="landing-info-block">
+          <h2>Native Desktop App</h2>
+          <p>
+            A Tauri application to manage servers, skills, and configuration.
+            Everything in one place, running locally.
           </p>
-          <div
-            className="landing-cta-row"
-            style={{ animationDelay: '240ms' }}
-          >
-            <Link
-              to="/docs/$"
-              params={{ _splat: '' }}
-              className="landing-cta"
-            >
-              Get Started
-              <span className="landing-cta-arrow">→</span>
-            </Link>
-            <a
-              href="https://github.com/Finnegan1/skills-mcp"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="landing-cta-secondary"
-            >
-              GitHub
-            </a>
-          </div>
-        </section>
+        </div>
+        <div className="landing-info-block">
+          <h2>Skills as Markdown</h2>
+          <p>
+            Define, share, and install AI skills as portable markdown files.
+            Browse the marketplace or write your own.
+          </p>
+        </div>
+        <div className="landing-info-block">
+          <h2>Hot-Reload Config</h2>
+          <p>
+            Change settings, add servers, update skills — everything applies
+            instantly without restarting.
+          </p>
+        </div>
+      </section>
 
-        {/* Features */}
-        <section className="landing-features">
-          {features.map((f, i) => (
-            <div
-              key={f.title}
-              className="landing-feature-card"
-              style={{ animationDelay: `${320 + i * 80}ms` }}
-            >
-              <div className="landing-feature-icon">
-                <f.icon size={20} strokeWidth={1.5} />
-              </div>
-              <h3 className="landing-feature-title">{f.title}</h3>
-              <p className="landing-feature-desc">{f.description}</p>
-            </div>
-          ))}
-        </section>
-
-        {/* Footer */}
-        <footer className="landing-footer" style={{ animationDelay: '700ms' }}>
-          <span>Skill Gateway</span>
-          <span className="landing-footer-sep">·</span>
-          <a
-            href="https://github.com/Finnegan1/skills-mcp"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub
-          </a>
-        </footer>
-      </div>
-    </HomeLayout>
+      <footer className="landing-ft">
+        <span>Agent Manager</span>
+        <a
+          href="https://github.com/Finnegan1/AgentManager"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          GitHub
+        </a>
+        <Link to="/docs/$" params={{ _splat: '' }}>
+          Docs
+        </Link>
+      </footer>
+    </div>
   );
 }

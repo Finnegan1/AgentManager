@@ -2,14 +2,14 @@ import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 
 export const gitConfig = {
   user: 'Finnegan1',
-  repo: 'skills-mcp',
+  repo: 'AgentManager',
   branch: 'main',
 };
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      title: 'Skill Gateway',
+      title: 'Agent Manager',
     },
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
   };
